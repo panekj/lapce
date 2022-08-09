@@ -18,36 +18,49 @@ env:
 
 jobs:
   windows:
+    name: Build Lapce for ${{ matrix.target }} / ${{ matrix.arch }}
     runs-on: windows-latest
-
+    strategy:
+      matrix:
+        include:
+          - arch: x64
+            target: x86_64
+#         x86 - no field {`Rip`,`Rsp`} on type `&winapi::um::winnt::CONTEXT`
+          - arch: x86
+            target: i686
+#         arm64 - currently unsupported by winapi/coronsei crates
+          - arch: arm64
+            target: aarch64
     defaults:
       run:
         shell: bash
 
     steps:
       - uses: actions/checkout@v2
+      - name: Add ${{ matrix.target }}-pc-windows-msvc target
+        run: rustup target add ${{ matrix.target }}-pc-windows-msvc
       - name: Update rust
         run: rustup update
       - name: Build
-        run: cargo build --profile release-lto
+        run: cargo build --profile release-lto --target ${{ matrix.target }}
       - name: Install WiX
         run: nuget install WiX
       - name: Crate msi installer
         run: |
-          ./WiX.*/tools/candle.exe -arch "x64" -ext WixUIExtension -ext WixUtilExtension \
+          ./WiX.*/tools/candle.exe -arch "${{ matrix.arch }}" -ext WixUIExtension -ext WixUtilExtension \
             -out "./lapce.wixobj" "extra/windows/wix/lapce.wxs"
           ./WiX.*/tools/light.exe -ext WixUIExtension -ext WixUtilExtension \
-            -out "./Lapce-windows.msi" -sice:ICE61 -sice:ICE91 \
+            -out "./Lapce-windows-${{ matrix.arch }}.msi" -sice:ICE61 -sice:ICE91 \
             "./lapce.wixobj"
       - name: Create portable
         shell: pwsh
         run: |
-          Compress-Archive ./target/release-lto/lapce.exe ./Lapce-windows-portable.zip
+          Compress-Archive ./target/release-lto/lapce.exe ./Lapce-windows-portable-${{ matrix.arch }}.zip
       - name: Create lapce-proxy archive
         shell: pwsh
         run: |
           $file = [System.IO.File]::Open((Join-Path $PWD '.\target\release-lto\lapce-proxy.exe'), [System.IO.FileMode]::Open)
-          $archive = [System.IO.File]::Create((Join-Path $PWD '.\lapce-proxy-windows-x86_64.gz'))
+          $archive = [System.IO.File]::Create((Join-Path $PWD '.\lapce-proxy-windows-${{ matrix.target }}.gz'))
           $compressor = [System.IO.Compression.GZipStream]::new($archive, [System.IO.Compression.CompressionMode]::Compress)
           $file.CopyTo($compressor)
           Start-Sleep -Seconds 10
@@ -211,6 +224,7 @@ jobs:
   publish:
     needs: [linux, linux-musl, windows, macos]
     runs-on: ubuntu-20.04
+    if: always()
     env:
       GH_REPO: ${{ github.repository }}
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
