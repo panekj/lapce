@@ -18,7 +18,7 @@ env:
 
 jobs:
   windows:
-    name: Build Lapce for ${{ matrix.target }} / ${{ matrix.arch }}
+    name: '[windows] Build ${{ matrix.target }} / ${{ matrix.arch }}'
     runs-on: windows-latest
     strategy:
       matrix:
@@ -42,7 +42,7 @@ jobs:
       - name: Update rust
         run: rustup update
       - name: Build
-        run: cargo build --profile release-lto --target ${{ matrix.target }}
+        run: cargo build --profile release-lto --target ${{ matrix.target }}-pc-windows-msvc
       - name: Install WiX
         run: nuget install WiX
       - name: Crate msi installer
@@ -75,6 +75,7 @@ jobs:
           retention-days: 1
 
   linux:
+    name: '[linux] Build x86_64'
     runs-on: ubuntu-18.04
 
     steps:
@@ -100,7 +101,7 @@ jobs:
           retention-days: 1
 
   linux-musl:
-    name: Build lapce-proxy for ${{ matrix.platform }}
+    name: '[linux-musl] Build lapce-proxy ${{ matrix.platform }}'
     runs-on: ubuntu-latest
     env:
       CROSS_SYSROOT: /mnt/alpine-${{ matrix.platform }}
@@ -182,6 +183,7 @@ jobs:
           retention-days: 1
 
   macos:
+    name: '[macos] Build x86_64 & aarch64'
     runs-on: macos-11
 
     env:
