@@ -12,6 +12,7 @@ use lapce_core::cursor::CursorMode;
 use lapce_core::selection::Selection;
 use lapce_rpc::file::FileNodeItem;
 use lapce_rpc::proxy::ProxyResponse;
+use lsp_types::Url;
 use xi_rope::Rope;
 
 use crate::data::LapceMainSplitData;
@@ -78,7 +79,7 @@ impl FileExplorerData {
         let widget_id = WidgetId::next();
         if let Some(path) = workspace.path.as_ref() {
             items.push(FileNodeItem {
-                path_buf: path.clone(),
+                path: Url::parse(&format!("file:{}", path.clone().display())).unwrap(),
                 is_dir: true,
                 read: false,
                 open: false,
@@ -86,13 +87,13 @@ impl FileExplorerData {
                 children_open_count: 0,
             });
             let path = path.clone();
-            Self::read_dir(&path, true, tab_id, &proxy, event_sink.clone());
+            Self::read_dir(&Url::parse(&format!("file:{}", path.display())).unwrap(), true, tab_id, &proxy, event_sink.clone());
         }
         Self {
             tab_id,
             widget_id,
             workspace: workspace.path.as_ref().map(|p| FileNodeItem {
-                path_buf: p.clone(),
+                path: Url::parse(&format!("file:{}", p.clone().display())).unwrap(),
                 is_dir: true,
                 read: false,
                 open: false,
@@ -124,7 +125,7 @@ impl FileExplorerData {
     }
 
     pub fn node_tree(&mut self, path: &Path) -> Option<Vec<PathBuf>> {
-        let root = &self.workspace.as_ref()?.path_buf;
+        let root = &self.workspace.as_ref()?.path.to_file_path().unwrap();
         let path = path.strip_prefix(root).ok()?;
         Some(
             path.ancestors()
@@ -152,10 +153,10 @@ impl FileExplorerData {
 
     pub fn get_node_mut(&mut self, path: &Path) -> Option<&mut FileNodeItem> {
         let mut node = self.workspace.as_mut()?;
-        if node.path_buf == path {
+        if node.path.to_file_path().unwrap() == path {
             return Some(node);
         }
-        let root = node.path_buf.clone();
+        let root = node.path.clone().to_file_path().unwrap();
         let path = path.strip_prefix(&root).ok()?;
         for path in path.ancestors().collect::<Vec<&Path>>().iter().rev() {
             if path.to_str()?.is_empty() {
@@ -193,7 +194,7 @@ impl FileExplorerData {
             if let Some(existing) = node.children.get(&path) {
                 if existing.read {
                     Self::read_dir(
-                        &path,
+                        &Url::parse(&format!("file:{}", path.display())).unwrap(),
                         existing.open,
                         self.tab_id,
                         &self.proxy,
@@ -201,7 +202,7 @@ impl FileExplorerData {
                     );
                 }
             } else {
-                node.children.insert(child.path_buf.clone(), child);
+                node.children.insert(child.path.clone().to_file_path().unwrap(), child);
             }
         }
 
@@ -221,7 +222,7 @@ impl FileExplorerData {
         if let Some(workspace) = self.workspace.as_ref() {
             let workspace = workspace.clone();
             Self::read_dir(
-                &workspace.path_buf,
+                &workspace.path,
                 true,
                 self.tab_id,
                 &self.proxy,
@@ -231,7 +232,7 @@ impl FileExplorerData {
     }
 
     pub fn read_dir(
-        path: &Path,
+        path: &Url,
         expand: bool,
         tab_id: WidgetId,
         proxy: &LapceProxy,
@@ -243,14 +244,14 @@ impl FileExplorerData {
     }
 
     pub fn read_dir_cb<F: FnOnce() + Send + 'static>(
-        path: &Path,
+        path: &Url,
         expand: bool,
         tab_id: WidgetId,
         proxy: &LapceProxy,
         event_sink: ExtEventSink,
         mut on_finished: Option<F>,
     ) {
-        let path = PathBuf::from(path);
+        let path = path.to_file_path().unwrap();
         let local_path = path.clone();
         proxy.proxy_rpc.read_dir(local_path, move |result| {
             if let Ok(ProxyResponse::ReadDirResponse { items }) = result {
@@ -302,7 +303,7 @@ impl FileExplorerData {
             Naming::Renaming { list_index, .. } => {
                 let renaming =
                     if let Some((_, node)) = self.get_node_by_index(*list_index) {
-                        &node.path_buf
+                        node.path.to_file_path().unwrap()
                     } else {
                         // There was either nothing we were renaming, or the index disappeared
                         return;
@@ -311,7 +312,7 @@ impl FileExplorerData {
                 let target_path = renaming.with_file_name(target_name);
 
                 // If it is the same, then we don't bother renaming it
-                if &target_path == renaming {
+                if target_path == renaming {
                     return;
                 }
 

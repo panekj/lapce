@@ -48,7 +48,7 @@ fn paint_single_file_node_item(
     config: &Config,
     toggle_rects: &mut HashMap<usize, Rect>,
 ) {
-    let background = if Some(item.path_buf.as_ref()) == active {
+    let background = if Some(item.path.to_file_path().unwrap().as_ref()) == active {
         Some(LapceTheme::PANEL_CURRENT)
     } else if Some(current) == hovered {
         Some(LapceTheme::PANEL_HOVERED)
@@ -100,7 +100,8 @@ fn paint_single_file_node_item(
             .with_origin(Point::new(1.0 + 16.0 + padding, svg_y));
         ctx.draw_svg(&svg, rect, None);
     } else {
-        let (svg, svg_color) = file_svg(&item.path_buf);
+        let svg_path = item.path.to_file_path().unwrap();
+        let (svg, svg_color) = file_svg(&svg_path);
         let rect = Size::new(svg_size, svg_size)
             .to_rect()
             .with_origin(Point::new(1.0 + 16.0 + padding, svg_y));
@@ -109,7 +110,7 @@ fn paint_single_file_node_item(
     let text_layout = ctx
         .text()
         .new_text_layout(
-            item.path_buf
+            item.path.to_file_path().unwrap()
                 .file_name()
                 .unwrap()
                 .to_str()
@@ -543,14 +544,14 @@ impl Widget<LapceTabData> for FileExplorerFileList {
                                 let tab_id = data.id;
                                 let event_sink = ctx.get_external_handle();
                                 FileExplorerData::read_dir(
-                                    &node.path_buf,
+                                    &node.path,
                                     true,
                                     tab_id,
                                     &data.proxy,
                                     event_sink,
                                 );
                             }
-                            let path = node.path_buf.clone();
+                            let path = node.path.clone().to_file_path().unwrap();
                             if let Some(paths) = file_explorer.node_tree(&path) {
                                 for path in paths.iter() {
                                     file_explorer.update_node_count(path);
@@ -560,7 +561,7 @@ impl Widget<LapceTabData> for FileExplorerFileList {
                             ctx.submit_command(Command::new(
                                 LAPCE_UI_COMMAND,
                                 LapceUICommand::OpenFile(
-                                    node.path_buf.clone(),
+                                    node.path.clone().to_file_path().unwrap(),
                                     false,
                                 ),
                                 Target::Widget(data.id),
@@ -568,7 +569,7 @@ impl Widget<LapceTabData> for FileExplorerFileList {
                             ctx.submit_command(Command::new(
                                 LAPCE_UI_COMMAND,
                                 LapceUICommand::ActiveFileChanged {
-                                    path: Some(node.path_buf.clone()),
+                                    path: Some(node.path.clone().to_file_path().unwrap()),
                                 },
                                 Target::Widget(file_explorer.widget_id),
                             ));
@@ -581,14 +582,14 @@ impl Widget<LapceTabData> for FileExplorerFileList {
                         .get_node_by_index(index)
                         .or_else(|| file_explorer.workspace.as_ref().map(|x| (0, x)))
                     {
-                        let is_workspace = Some(&node.path_buf)
-                            == file_explorer.workspace.as_ref().map(|x| &x.path_buf);
+                        let is_workspace = Some(&node.path)
+                            == file_explorer.workspace.as_ref().map(|x| &x.path);
 
                         // The folder that it is, or is within
                         let base = if node.is_dir {
-                            Some(node.path_buf.clone())
+                            Some(node.path.clone().to_file_path().unwrap())
                         } else {
-                            node.path_buf.parent().map(ToOwned::to_owned)
+                            node.path.to_file_path().unwrap().parent().map(ToOwned::to_owned)
                         };
 
                         // If there's no reasonable path at the point, then ignore it
@@ -643,7 +644,7 @@ impl Widget<LapceTabData> for FileExplorerFileList {
                                     .command(Command::new(
                                         LAPCE_UI_COMMAND,
                                         LapceUICommand::RevealInFileExplorer(
-                                            node.path_buf.clone(),
+                                            node.path.clone().to_file_path().unwrap(),
                                         ),
                                         Target::Auto,
                                     ));
@@ -659,7 +660,8 @@ impl Widget<LapceTabData> for FileExplorerFileList {
                                         list_index: index,
                                         indent_level,
                                         text: node
-                                            .path_buf
+                                            .path
+                                            .to_file_path().unwrap()
                                             .file_name()
                                             .map(|x| x.to_string_lossy().to_string())
                                             .unwrap_or_else(String::new),
@@ -678,7 +680,7 @@ impl Widget<LapceTabData> for FileExplorerFileList {
                                 Command::new(
                                     LAPCE_UI_COMMAND,
                                     LapceUICommand::TrashPath {
-                                        path: node.path_buf.clone(),
+                                        path: node.path.clone().to_file_path().unwrap(),
                                     },
                                     Target::Auto,
                                 ),
@@ -940,7 +942,7 @@ fn expand_dir(
                 on_finished();
             } else {
                 FileExplorerData::read_dir_cb(
-                    &node.path_buf,
+                    &node.path,
                     true,
                     tab_id,
                     proxy,
@@ -948,7 +950,7 @@ fn expand_dir(
                     Some(on_finished),
                 );
             }
-            let path = node.path_buf.clone();
+            let path = node.path.clone().to_file_path().unwrap();
             if let Some(paths) = file_explorer.node_tree(&path) {
                 for path in paths.iter() {
                     file_explorer.update_node_count(path);

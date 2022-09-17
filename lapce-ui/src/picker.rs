@@ -355,7 +355,7 @@ impl FilePickerExplorer {
                                 let tab_id = data.id;
                                 let event_sink = ctx.get_external_handle();
                                 FilePickerData::read_dir(
-                                    &node.path_buf,
+                                    &node.path.to_file_path().unwrap(),
                                     tab_id,
                                     &data.proxy,
                                     event_sink,
@@ -373,12 +373,12 @@ impl FilePickerExplorer {
                                 let tab_id = data.id;
                                 let event_sink = ctx.get_external_handle();
                                 FilePickerData::read_dir(
-                                    &node.path_buf,
+                                    &node.path.to_file_path().unwrap(),
                                     tab_id,
                                     &data.proxy,
                                     event_sink,
                                 );
-                                let pwd = node.path_buf.clone();
+                                let pwd = node.path.clone().to_file_path().unwrap();
                                 picker.index = 0;
                                 data.set_picker_pwd(pwd);
                                 return;
@@ -395,7 +395,7 @@ impl FilePickerExplorer {
                             ctx.submit_command(Command::new(
                                 LAPCE_UI_COMMAND,
                                 LapceUICommand::OpenFile(
-                                    node.path_buf.clone(),
+                                    node.path.clone().to_file_path().unwrap(),
                                     false,
                                 ),
                                 Target::Widget(data.id),
@@ -406,7 +406,7 @@ impl FilePickerExplorer {
                     }
                     self.last_left_click = Some((index, std::time::Instant::now()));
                 }
-                let path = node.path_buf.clone();
+                let path = node.path.clone().to_file_path().unwrap();
                 for p in path.ancestors() {
                     picker.root.update_node_count(p);
                 }
@@ -609,7 +609,8 @@ pub fn paint_file_node_item_by_index(
                 .with_origin(Point::new(1.0 + 16.0 + padding, svg_y));
             ctx.draw_svg(&svg, rect, None);
         } else {
-            let (svg, svg_color) = file_svg(&item.path_buf);
+            let svg_path = item.path.to_file_path().unwrap();
+            let (svg, svg_color) = file_svg(&svg_path);
             let rect = Size::new(svg_size, svg_size)
                 .to_rect()
                 .with_origin(Point::new(1.0 + 16.0 + padding, svg_y));
@@ -618,7 +619,8 @@ pub fn paint_file_node_item_by_index(
         let text_layout = ctx
             .text()
             .new_text_layout(
-                item.path_buf
+                item.path
+                .to_file_path().unwrap()
                     .file_name()
                     .unwrap()
                     .to_str()
@@ -703,7 +705,7 @@ impl FilePickerControl {
                             if let Some(node) = node {
                                 if node.is_dir {
                                     let mut workspace = workspace.clone();
-                                    workspace.path = Some(node.path_buf.clone());
+                                    workspace.path = Some(node.path.clone().to_file_path().unwrap());
                                     ctx.submit_command(Command::new(
                                         LAPCE_UI_COMMAND,
                                         LapceUICommand::SetWorkspace(workspace),
@@ -713,7 +715,7 @@ impl FilePickerControl {
                                     ctx.submit_command(Command::new(
                                         LAPCE_UI_COMMAND,
                                         LapceUICommand::OpenFile(
-                                            node.path_buf.clone(),
+                                            node.path.clone().to_file_path().unwrap(),
                                             false,
                                         ),
                                         Target::Widget(data.id),

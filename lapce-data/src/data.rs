@@ -1180,7 +1180,7 @@ impl LapceTabData {
                             let tab_id = self.id;
                             let event_sink = ctx.get_external_handle();
                             FilePickerData::read_dir(
-                                &node.path_buf,
+                                &node.path.to_file_path().unwrap(),
                                 tab_id,
                                 &self.proxy,
                                 event_sink,
@@ -1204,7 +1204,7 @@ impl LapceTabData {
                             let tab_id = self.id;
                             let event_sink = ctx.get_external_handle();
                             FilePickerData::read_dir(
-                                &node.path_buf,
+                                &node.path.to_file_path().unwrap(),
                                 tab_id,
                                 &self.proxy,
                                 event_sink,

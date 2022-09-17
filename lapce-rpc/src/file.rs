@@ -4,11 +4,12 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use lsp_types::Url;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct FileNodeItem {
-    pub path_buf: PathBuf,
+    pub path: Url,
     pub is_dir: bool,
     pub read: bool,
     pub open: bool,
@@ -27,8 +28,20 @@ impl std::cmp::PartialOrd for FileNodeItem {
             return Some(cmp::Ordering::Greater);
         }
 
-        let self_file_name = self.path_buf.file_name()?.to_str()?.to_lowercase();
-        let other_file_name = other.path_buf.file_name()?.to_str()?.to_lowercase();
+        let self_file_name = self
+            .path
+            .to_file_path()
+            .unwrap()
+            .file_name()?
+            .to_str()?
+            .to_lowercase();
+        let other_file_name = other
+            .path
+            .to_file_path()
+            .unwrap()
+            .file_name()?
+            .to_str()?
+            .to_lowercase();
         if self_file_name.starts_with('.') && !other_file_name.starts_with('.') {
             return Some(cmp::Ordering::Less);
         }
@@ -48,17 +61,21 @@ impl FileNodeItem {
             .collect::<Vec<&FileNodeItem>>();
         children.sort_by(|a, b| match (a.is_dir, b.is_dir) {
             (true, true) => a
-                .path_buf
+                .path
+                .to_file_path()
+                .unwrap()
                 .to_str()
                 .unwrap()
-                .cmp(b.path_buf.to_str().unwrap()),
+                .cmp(b.path.to_file_path().unwrap().to_str().unwrap()),
             (true, false) => Ordering::Less,
             (false, true) => Ordering::Greater,
             (false, false) => a
-                .path_buf
+                .path
+                .to_file_path()
+                .unwrap()
                 .to_str()
                 .unwrap()
-                .cmp(b.path_buf.to_str().unwrap()),
+                .cmp(b.path.to_file_path().unwrap().to_str().unwrap()),
         });
         children
     }
@@ -71,41 +88,45 @@ impl FileNodeItem {
             .collect::<Vec<&mut FileNodeItem>>();
         children.sort_by(|a, b| match (a.is_dir, b.is_dir) {
             (true, true) => a
-                .path_buf
+                .path
+                .to_file_path()
+                .unwrap()
                 .to_str()
                 .unwrap()
-                .cmp(b.path_buf.to_str().unwrap()),
+                .cmp(b.path.to_file_path().unwrap().to_str().unwrap()),
             (true, false) => Ordering::Less,
             (false, true) => Ordering::Greater,
             (false, false) => a
-                .path_buf
+                .path
+                .to_file_path()
+                .unwrap()
                 .to_str()
                 .unwrap()
-                .cmp(b.path_buf.to_str().unwrap()),
+                .cmp(b.path.to_file_path().unwrap().to_str().unwrap()),
         });
         children
     }
 
     pub fn get_file_node(&self, path: &Path) -> Option<&FileNodeItem> {
-        let path_buf = self.path_buf.clone();
-        let path = path.strip_prefix(&self.path_buf).ok()?;
+        let path_url = self.path.clone();
+        let path = path.strip_prefix(&self.path.to_file_path().unwrap()).ok()?;
         let ancestors = path.ancestors().collect::<Vec<&Path>>();
 
         let mut node = Some(self);
         for p in ancestors[..ancestors.len() - 1].iter().rev() {
-            node = Some(node?.children.get(&path_buf.join(p))?);
+            node = Some(node?.children.get(&path_url.to_file_path().unwrap().join(p))?);
         }
         node
     }
 
     pub fn get_file_node_mut(&mut self, path: &Path) -> Option<&mut FileNodeItem> {
-        let path_buf = self.path_buf.clone();
-        let path = path.strip_prefix(&self.path_buf).ok()?;
+        let path_url = self.path.clone();
+        let path = path.strip_prefix(&self.path.to_file_path().unwrap()).ok()?;
         let ancestors = path.ancestors().collect::<Vec<&Path>>();
 
         let mut node = Some(self);
         for p in ancestors[..ancestors.len() - 1].iter().rev() {
-            node = Some(node?.children.get_mut(&path_buf.join(p))?);
+            node = Some(node?.children.get_mut(&path_url.to_file_path().unwrap().join(p))?);
         }
         node
     }
@@ -127,7 +148,7 @@ impl FileNodeItem {
         node.children.insert(
             PathBuf::from(path),
             FileNodeItem {
-                path_buf: PathBuf::from(path),
+                path: Url::parse(&format!("file:{}", path.display())).unwrap(),
                 is_dir,
                 read: false,
                 open: false,

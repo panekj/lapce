@@ -600,7 +600,7 @@ impl ProxyHandler for Dispatcher {
                                             (
                                                 e.path(),
                                                 FileNodeItem {
-                                                    path_buf: e.path(),
+                                                    path: Url::parse(&format!("file:{}", e.path().display())).unwrap(),
                                                     is_dir: e.path().is_dir(),
                                                     open: false,
                                                     read: false,

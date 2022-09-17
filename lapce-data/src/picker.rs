@@ -5,6 +5,7 @@ use std::{
 
 use druid::{ExtEventSink, Target, WidgetId};
 use lapce_rpc::{file::FileNodeItem, proxy::ProxyResponse};
+use lsp_types::Url;
 
 use crate::{
     command::{LapceUICommand, LAPCE_UI_COMMAND},
@@ -25,7 +26,7 @@ pub struct FilePickerData {
 impl FilePickerData {
     pub fn new() -> Self {
         let root = FileNodeItem {
-            path_buf: PathBuf::from("/"),
+            path: Url::parse("file:/").unwrap(),
             is_dir: true,
             read: false,
             open: false,
@@ -48,7 +49,7 @@ impl FilePickerData {
     pub fn init_home(&mut self, home: &Path) {
         self.home = home.to_path_buf();
         let mut current_file_node = FileNodeItem {
-            path_buf: home.to_path_buf(),
+            path: Url::parse(&format!("file:{}", home.display())).unwrap(),
             is_dir: true,
             read: false,
             open: false,
@@ -62,7 +63,7 @@ impl FilePickerData {
 
         for p in ancestors {
             let mut file_node = FileNodeItem {
-                path_buf: PathBuf::from(p),
+                path: Url::parse(&format!("file:{}", p.display())).unwrap(),
                 is_dir: true,
                 read: false,
                 open: true,
