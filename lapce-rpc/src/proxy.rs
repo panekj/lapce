@@ -382,6 +382,7 @@ impl ProxyRpcHandler {
         request: ProxyRequest,
         f: impl ProxyCallback + 'static,
     ) {
+        log::debug!(target: "lapce_rpc::proxy::request", "{request:?}");
         self.request_common(request, ResponseHandler::Callback(Box::new(f)))
     }
 
