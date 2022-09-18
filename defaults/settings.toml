@@ -1,7 +1,7 @@
 [core]
 modal = false
 color-theme = "Lapce Dark"
-icon-theme = ""
+file-icon-theme = "Lapce Codicons"
 custom-titlebar = true
 
 [editor]
@@ -55,6 +55,7 @@ trim-search-results-whitespace = true
 
 [theme]
 name = ""
+color-preference = ""
 
 [theme.base]
 white = "#ABB2BF"
@@ -107,6 +108,8 @@ magenta = "#C678DD"
 "lapce.dropdown_shadow" = "#000000"
 "lapce.border" = "#000000"
 "lapce.scroll_bar" = "$grey"
+"lapce.icon_active" = "$white"
+"lapce.icon_inactive" = "$grey"
 
 "editor.background" = "$black"
 "editor.foreground" = "$white"

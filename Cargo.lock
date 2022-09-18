@@ -2514,6 +2514,7 @@ version = "0.2.1"
 dependencies = [
  "arc-swap",
  "bitflags",
+ "directories",
  "itertools",
  "lapce-rpc",
  "log 0.4.17",
@@ -2587,6 +2588,7 @@ dependencies = [
  "flate2",
  "fs_extra",
  "fuzzy-matcher",
+ "globset",
  "hashbrown 0.11.2",
  "im",
  "indexmap",
@@ -2689,6 +2691,7 @@ dependencies = [
  "clap",
  "druid",
  "fern",
+ "globset",
  "im",
  "image",
  "include_dir",

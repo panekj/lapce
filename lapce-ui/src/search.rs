@@ -10,7 +10,7 @@ use lapce_core::command::FocusCommand;
 use lapce_data::command::{CommandKind, LapceCommand, LAPCE_COMMAND};
 use lapce_data::{
     command::{LapceUICommand, LAPCE_UI_COMMAND},
-    config::LapceTheme,
+    config::{LapceIcons, LapceTheme},
     data::LapceTabData,
     editor::{EditorLocation, LineCol},
     panel::PanelKind,
@@ -46,7 +46,7 @@ impl SearchInput {
             .padding((search_input_padding, search_input_padding));
 
         let icons = vec![LapceIcon {
-            icon: "case-sensitive.svg",
+            icon: LapceIcons::SEARCH_CASE_SENSITIVE,
             rect: Rect::ZERO,
             command: Command::new(
                 LAPCE_COMMAND,
@@ -237,14 +237,14 @@ impl Widget<LapceTabData> for SearchInput {
             .unwrap_or_default();
 
         for icon in self.icons.iter() {
-            if icon.icon == "case-sensitive.svg" && case_sensitive {
+            if icon.icon == LapceIcons::SEARCH_CASE_SENSITIVE && case_sensitive {
                 ctx.fill(
                     &icon.rect,
                     data.config
                         .get_color_unchecked(LapceTheme::LAPCE_ACTIVE_TAB),
                 );
             } else if icon.rect.contains(self.mouse_pos)
-                && icon.icon != "case-sensitive.svg"
+                && icon.icon != LapceIcons::SEARCH_CASE_SENSITIVE
             {
                 ctx.fill(
                     &icon.rect,
@@ -449,7 +449,8 @@ impl Widget<LapceTabData> for SearchContent {
                 continue;
             }
 
-            let (svg, svg_color) = file_svg(path);
+            let (svg, svg_color) =
+                file_svg(data.config.file_icon_theme.resolve_path_icon(path));
             let rect = Size::new(self.line_height, self.line_height)
                 .to_rect()
                 .with_origin(Point::new(0.0, self.line_height * i as f64))

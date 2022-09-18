@@ -8,17 +8,17 @@ use druid::{
     Target, UpdateCtx, Widget, WidgetExt, WidgetId, WidgetPod, WindowId,
 };
 use itertools::Itertools;
-use lapce_core::command::FocusCommand;
+use lapce_core::{command::FocusCommand, meta};
 use lapce_data::{
     command::{
         CommandKind, LapceCommand, LapceUICommand, LAPCE_COMMAND, LAPCE_UI_COMMAND,
     },
-    config::{LapceConfig, LapceTheme},
+    config::{LapceConfig, LapceIcons, LapceTheme},
     data::{EditorTabChild, LapceData, LapceEditorData, LapceTabData},
     document::{BufferContent, LocalBufferKind},
     explorer::{FileExplorerData, Naming},
     panel::PanelKind,
-    proxy::{LapceProxy, VERSION},
+    proxy::LapceProxy,
 };
 use lapce_rpc::file::FileNodeItem;
 
@@ -69,9 +69,9 @@ fn paint_single_file_node_item(
     let padding = 15.0 * level as f64;
     if item.is_dir {
         let icon_name = if item.open {
-            "chevron-down.svg"
+            LapceIcons::ITEM_OPENED
         } else {
-            "chevron-right.svg"
+            LapceIcons::ITEM_CLOSED
         };
         let svg = get_svg(icon_name).unwrap();
         let rect = Size::new(svg_size, svg_size)
@@ -80,26 +80,35 @@ fn paint_single_file_node_item(
         ctx.draw_svg(
             &svg,
             rect,
-            Some(config.get_color_unchecked(LapceTheme::EDITOR_FOREGROUND)),
+            Some(config.get_color_unchecked(LapceTheme::LAPCE_ICON_ACTIVE)),
         );
         toggle_rects.insert(current, rect);
 
         let icon_name = if item.open {
-            "default_folder_opened.svg"
+            LapceIcons::DIRECTORY_OPENED
         } else {
-            "default_folder.svg"
+            LapceIcons::DIRECTORY_CLOSED
         };
         let svg = get_svg(icon_name).unwrap();
         let rect = Size::new(svg_size, svg_size)
             .to_rect()
             .with_origin(Point::new(1.0 + 16.0 + padding, svg_y));
-        ctx.draw_svg(&svg, rect, None);
+        ctx.draw_svg(
+            &svg,
+            rect,
+            Some(config.get_color_unchecked(LapceTheme::LAPCE_ICON_ACTIVE)),
+        );
     } else {
-        let (svg, svg_color) = file_svg(&item.path_buf);
+        let (svg, _svg_color) =
+            file_svg(config.file_icon_theme.resolve_path_icon(&item.path_buf));
         let rect = Size::new(svg_size, svg_size)
             .to_rect()
             .with_origin(Point::new(1.0 + 16.0 + padding, svg_y));
-        ctx.draw_svg(&svg, rect, svg_color);
+        ctx.draw_svg(
+            &svg,
+            rect,
+            Some(config.get_color_unchecked(LapceTheme::LAPCE_ICON_ACTIVE)),
+        );
     }
     let text_layout = ctx
         .text()
@@ -1014,7 +1023,7 @@ impl OpenEditorList {
         let size = ctx.size();
         let mut text = "".to_string();
         let mut hint = "".to_string();
-        let mut svg = get_svg("default_file.svg").unwrap();
+        let mut svg = get_svg(LapceIcons::FILE).unwrap();
         let mut pristine = true;
         match child {
             EditorTabChild::Editor(view_id, _, _) => {
@@ -1022,7 +1031,9 @@ impl OpenEditorList {
                 pristine = editor_buffer.doc.buffer().is_pristine();
 
                 if let BufferContent::File(path) = &editor_buffer.editor.content {
-                    (svg, _) = file_svg(path);
+                    (svg, _) = file_svg(
+                        data.config.file_icon_theme.resolve_path_icon(path),
+                    );
                     if let Some(file_name) = path.file_name() {
                         if let Some(s) = file_name.to_str() {
                             text = s.to_string();
@@ -1051,7 +1062,7 @@ impl OpenEditorList {
             }
             EditorTabChild::Settings { .. } => {
                 text = "Settings".to_string();
-                hint = format!("ver. {}", *VERSION);
+                hint = format!("ver. {}", *meta::VERSION);
             }
             EditorTabChild::Plugin { volt_name, .. } => {
                 text = format!("Plugin: {volt_name}");
@@ -1097,14 +1108,21 @@ impl OpenEditorList {
                 close_rect.inflate(2.0, 2.0),
                 data.config.get_color_unchecked(LapceTheme::PANEL_CURRENT),
             );
-            Some(get_svg("close.svg").unwrap())
+            Some(get_svg(LapceIcons::CLOSE).unwrap())
         } else if pristine {
             None
         } else {
-            Some(get_svg("unsaved.svg").unwrap())
+            Some(get_svg(LapceIcons::UNSAVED).unwrap())
         };
         if let Some(close_svg) = close_svg {
-            ctx.draw_svg(&close_svg, close_rect, None);
+            ctx.draw_svg(
+                &close_svg,
+                close_rect,
+                Some(
+                    data.config
+                        .get_color_unchecked(LapceTheme::LAPCE_ICON_ACTIVE),
+                ),
+            );
         }
 
         let svg_rect =
@@ -1115,7 +1133,14 @@ impl OpenEditorList {
                     i as f64 * self.line_height
                         + (self.line_height - font_size) / 2.0,
                 ));
-        ctx.draw_svg(&svg, svg_rect, None);
+        ctx.draw_svg(
+            &svg,
+            svg_rect,
+            Some(
+                data.config
+                    .get_color_unchecked(LapceTheme::LAPCE_ICON_ACTIVE),
+            ),
+        );
 
         if !hint.is_empty() {
             text = format!("{} {}", text, hint);

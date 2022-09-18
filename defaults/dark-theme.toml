@@ -1,5 +1,6 @@
 [theme]
 name = "Lapce Dark"
+color-preference = "dark"
 
 [ui]
 font-family = ""
@@ -67,7 +68,8 @@ magenta = "#C678DD"
 "lapce.dropdown_shadow" = "#000000"
 "lapce.border" = "#000000"
 "lapce.scroll_bar" = "$grey"
-
+"lapce.icon_active" = "$white"
+"lapce.icon_inactive" = "$grey"
 
 "editor.background" = "$black"
 "editor.foreground" = "$white"

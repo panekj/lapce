@@ -21,13 +21,14 @@ use itertools::Itertools;
 use lapce_core::{
     command::{FocusCommand, MultiSelectionCommand},
     cursor::{Cursor, CursorMode},
+    directory::Directory,
     editor::EditType,
+    meta,
     mode::MotionMode,
     movement::Movement,
     register::Register,
     selection::Selection,
 };
-use lapce_proxy::{directory::Directory, VERSION};
 use lapce_rpc::{
     buffer::BufferId,
     core::{CoreMessage, CoreNotification},
@@ -1155,7 +1156,7 @@ impl LapceTabData {
         match command {
             LapceWorkbenchCommand::RestartToUpdate => {
                 if let Some(release) = (*self.latest_release).clone() {
-                    if release.version != *VERSION {
+                    if release.version != *meta::VERSION {
                         if let Ok(process_path) = env::current_exe() {
                             ctx.submit_command(Command::new(
                                 LAPCE_UI_COMMAND,
@@ -1263,10 +1264,17 @@ impl LapceTabData {
                     toml_edit::Value::from(false),
                 );
             }
-            LapceWorkbenchCommand::ChangeTheme => {
+            LapceWorkbenchCommand::ChangeColorTheme => {
                 ctx.submit_command(Command::new(
                     LAPCE_UI_COMMAND,
-                    LapceUICommand::RunPalette(Some(PaletteType::Theme)),
+                    LapceUICommand::RunPalette(Some(PaletteType::ColorTheme)),
+                    Target::Widget(self.palette.widget_id),
+                ));
+            }
+            LapceWorkbenchCommand::ChangeFileIconTheme => {
+                ctx.submit_command(Command::new(
+                    LAPCE_UI_COMMAND,
+                    LapceUICommand::RunPalette(Some(PaletteType::FileIconTheme)),
                     Target::Widget(self.palette.widget_id),
                 ));
             }

@@ -375,15 +375,31 @@ impl Widget<LapceWindowData> for LapceWindow {
                         self.new_tab(ctx, data, workspace.clone(), true);
                         return;
                     }
-                    LapceUICommand::SetTheme(theme, preview) => {
+                    LapceUICommand::SetColorTheme(theme, preview) => {
                         let config = Arc::make_mut(&mut data.config);
-                        config.set_theme(
+                        config.set_color_theme(
                             &LapceWorkspace::default(),
                             theme,
                             *preview,
                         );
                         for (_, tab) in data.tabs.iter_mut() {
-                            Arc::make_mut(&mut tab.config).set_theme(
+                            Arc::make_mut(&mut tab.config).set_color_theme(
+                                &tab.workspace,
+                                theme,
+                                true,
+                            );
+                        }
+                        ctx.set_handled();
+                    }
+                    LapceUICommand::SetFileIconTheme(theme, preview) => {
+                        let config = Arc::make_mut(&mut data.config);
+                        config.set_file_icon_theme(
+                            &LapceWorkspace::default(),
+                            theme,
+                            *preview,
+                        );
+                        for (_, tab) in data.tabs.iter_mut() {
+                            Arc::make_mut(&mut tab.config).set_file_icon_theme(
                                 &tab.workspace,
                                 theme,
                                 true,
@@ -810,6 +826,7 @@ pub fn window_controls(
     Vec<(druid::piet::Svg, Rect, druid::Color)>,
 ) {
     use druid::Color;
+    use lapce_data::config::LapceIcons;
 
     use crate::svg::get_svg;
 
@@ -888,7 +905,7 @@ pub fn window_controls(
         .with_origin(Point::new(x, 0.0))
         .inflate(-10.0, -10.0);
     svgs.push((
-        get_svg("chrome-minimize.svg").unwrap(),
+        get_svg(LapceIcons::WINDOW_MINIMISE).unwrap(),
         minimize_rect,
         hover_color.clone(),
     ));
@@ -898,9 +915,9 @@ pub fn window_controls(
         .with_origin(Point::new(x + width, 0.0))
         .inflate(-10.0, -10.0);
     let max_res_svg = if window_state == &WindowState::Restored {
-        get_svg("chrome-maximize.svg").unwrap()
+        get_svg(LapceIcons::WINDOW_MAXIMISE).unwrap()
     } else {
-        get_svg("chrome-restore.svg").unwrap()
+        get_svg(LapceIcons::WINDOW_RESTORE).unwrap()
     };
     svgs.push((max_res_svg, max_res_rect, hover_color));
 
@@ -909,7 +926,7 @@ pub fn window_controls(
         .with_origin(Point::new(x + 2.0 * width, 0.0))
         .inflate(-10.0, -10.0);
     svgs.push((
-        get_svg("chrome-close.svg").unwrap(),
+        get_svg(LapceIcons::WINDOW_CLOSE).unwrap(),
         close_rect,
         Color::rgb8(210, 16, 33),
     ));

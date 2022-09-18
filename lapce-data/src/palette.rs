@@ -47,7 +47,8 @@ pub enum PaletteType {
     Workspace,
     Command,
     Reference,
-    Theme,
+    ColorTheme,
+    FileIconTheme,
     SshHost,
     Language,
 }
@@ -55,17 +56,18 @@ pub enum PaletteType {
 impl PaletteType {
     fn string(&self) -> String {
         match &self {
-            PaletteType::File => "".to_string(),
             PaletteType::Line => "/".to_string(),
             PaletteType::DocumentSymbol => "@".to_string(),
             PaletteType::WorkspaceSymbol => "#".to_string(),
             PaletteType::GlobalSearch => "?".to_string(),
             PaletteType::Workspace => ">".to_string(),
             PaletteType::Command => ":".to_string(),
-            PaletteType::Reference => "".to_string(),
-            PaletteType::Theme => "".to_string(),
-            PaletteType::SshHost => "".to_string(),
-            PaletteType::Language => "".to_string(),
+            PaletteType::File
+            | PaletteType::Reference
+            | PaletteType::ColorTheme
+            | PaletteType::FileIconTheme
+            | PaletteType::SshHost
+            | PaletteType::Language => "".to_string(),
         }
     }
 
@@ -86,7 +88,8 @@ impl PaletteType {
         match current_type {
             PaletteType::Reference
             | PaletteType::SshHost
-            | PaletteType::Theme
+            | PaletteType::ColorTheme
+            | PaletteType::FileIconTheme
             | PaletteType::Language => {
                 return current_type.clone();
             }
@@ -142,7 +145,8 @@ pub enum PaletteItemContent {
     Workspace(LapceWorkspace),
     SshHost(String, String),
     Command(LapceCommand),
-    Theme(String),
+    ColorTheme(String),
+    FileIconTheme(String),
     Language(String),
 }
 
@@ -228,10 +232,17 @@ impl PaletteItemContent {
                     ));
                 }
             }
-            PaletteItemContent::Theme(theme) => {
+            PaletteItemContent::ColorTheme(theme) => {
                 ctx.submit_command(Command::new(
                     LAPCE_UI_COMMAND,
-                    LapceUICommand::SetTheme(theme.to_string(), preview),
+                    LapceUICommand::SetColorTheme(theme.to_string(), preview),
+                    Target::Auto,
+                ));
+            }
+            PaletteItemContent::FileIconTheme(theme) => {
+                ctx.submit_command(Command::new(
+                    LAPCE_UI_COMMAND,
+                    LapceUICommand::SetFileIconTheme(theme.to_string(), preview),
                     Target::Auto,
                 ));
             }
@@ -471,29 +482,33 @@ impl PaletteData {
 
     pub fn get_input(&self) -> &str {
         match &self.palette_type {
-            PaletteType::File => &self.input,
-            PaletteType::Reference => &self.input,
-            PaletteType::Theme => &self.input,
-            PaletteType::Language => &self.input,
-            PaletteType::SshHost => &self.input,
-            PaletteType::Line => &self.input[1..],
-            PaletteType::DocumentSymbol => &self.input[1..],
-            PaletteType::WorkspaceSymbol => &self.input[1..],
-            PaletteType::Workspace => &self.input[1..],
-            PaletteType::Command => &self.input[1..],
-            PaletteType::GlobalSearch => &self.input[1..],
+            PaletteType::File
+            | PaletteType::Reference
+            | PaletteType::ColorTheme
+            | PaletteType::FileIconTheme
+            | PaletteType::Language
+            | PaletteType::SshHost => &self.input,
+            PaletteType::Line
+            | PaletteType::DocumentSymbol
+            | PaletteType::WorkspaceSymbol
+            | PaletteType::Workspace
+            | PaletteType::Command
+            | PaletteType::GlobalSearch => &self.input[1..],
         }
     }
 }
 
 impl PaletteViewData {
     pub fn cancel(&mut self, ctx: &mut EventCtx) {
-        if self.palette.palette_type == PaletteType::Theme {
-            ctx.submit_command(Command::new(
-                LAPCE_UI_COMMAND,
-                LapceUICommand::ReloadConfig,
-                Target::Auto,
-            ));
+        match self.palette.palette_type {
+            PaletteType::ColorTheme | PaletteType::FileIconTheme => {
+                ctx.submit_command(Command::new(
+                    LAPCE_UI_COMMAND,
+                    LapceUICommand::ReloadConfig,
+                    Target::Auto,
+                ));
+            }
+            _ => {}
         }
         let palette = Arc::make_mut(&mut self.palette);
         palette.status = PaletteStatus::Inactive;
@@ -608,9 +623,14 @@ impl PaletteViewData {
             PaletteType::Command => {
                 self.get_commands(ctx);
             }
-            PaletteType::Theme => {
+            PaletteType::ColorTheme => {
                 let config = self.config.clone();
-                self.get_themes(ctx, &config);
+                self.get_color_themes(ctx, &config);
+                self.preselect_matching(ctx, &config.theme.name);
+            }
+            PaletteType::FileIconTheme => {
+                let config = self.config.clone();
+                self.get_file_icon_themes(ctx, &config);
                 self.preselect_matching(ctx, &config.theme.name);
             }
             PaletteType::Language => {
@@ -654,17 +674,18 @@ impl PaletteViewData {
         }
 
         let start = match palette.palette_type {
-            PaletteType::File => 0,
-            PaletteType::Reference => 0,
-            PaletteType::Theme => 0,
-            PaletteType::Language => 0,
-            PaletteType::SshHost => 0,
-            PaletteType::Line => 1,
-            PaletteType::DocumentSymbol => 1,
-            PaletteType::WorkspaceSymbol => 1,
-            PaletteType::Workspace => 1,
-            PaletteType::Command => 1,
-            PaletteType::GlobalSearch => 1,
+            PaletteType::File
+            | PaletteType::Reference
+            | PaletteType::ColorTheme
+            | PaletteType::FileIconTheme
+            | PaletteType::Language
+            | PaletteType::SshHost => 0,
+            PaletteType::Line
+            | PaletteType::DocumentSymbol
+            | PaletteType::WorkspaceSymbol
+            | PaletteType::Workspace
+            | PaletteType::Command
+            | PaletteType::GlobalSearch => 1,
         };
 
         if palette.cursor == start {
@@ -876,14 +897,29 @@ impl PaletteViewData {
             .collect();
     }
 
-    fn get_themes(&mut self, _ctx: &mut EventCtx, config: &LapceConfig) {
+    fn get_color_themes(&mut self, _ctx: &mut EventCtx, config: &LapceConfig) {
         let palette = Arc::make_mut(&mut self.palette);
         palette.total_items = config
-            .available_themes
+            .available_color_themes
             .values()
             .sorted_by_key(|(n, _)| n)
             .map(|(n, _)| PaletteItem {
-                content: PaletteItemContent::Theme(n.to_string()),
+                content: PaletteItemContent::ColorTheme(n.to_string()),
+                filter_text: n.to_string(),
+                score: 0,
+                indices: vec![],
+            })
+            .collect();
+    }
+
+    fn get_file_icon_themes(&mut self, _ctx: &mut EventCtx, config: &LapceConfig) {
+        let palette = Arc::make_mut(&mut self.palette);
+        palette.total_items = config
+            .available_file_icon_themes
+            .values()
+            .sorted_by_key(|(n, _)| n)
+            .map(|(n, _)| PaletteItem {
+                content: PaletteItemContent::ColorTheme(n.to_string()),
                 filter_text: n.to_string(),
                 score: 0,
                 indices: vec![],

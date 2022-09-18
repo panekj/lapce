@@ -6,23 +6,27 @@ use druid::{
     LifeCycleCtx, MouseEvent, PaintCtx, Point, Rect, RenderContext, Size, Target,
     TextAlignment, UpdateCtx, Widget, WidgetId, WidgetPod,
 };
-use lapce_core::command::FocusCommand;
+use lapce_core::{command::FocusCommand, meta};
 use lapce_data::{
     about::AboutFocusData,
     command::{
         CommandKind, LapceCommand, LapceUICommand, LAPCE_COMMAND, LAPCE_UI_COMMAND,
     },
-    config::LapceTheme,
+    config::{LapceIcons, LapceTheme},
     data::LapceTabData,
-    proxy::VERSION,
 };
 
 use crate::svg::get_svg;
 
-const URI_LAPCE: &str = "https://lapce.dev";
-const URI_GITHUB: &str = "https://github.com/lapce/lapce";
-const URI_MATRIX: &str = "https://matrix.to/#/#lapce-editor:matrix.org";
-const URI_DISCORD: &str = "https://discord.gg/n8tGJ6Rn6D";
+struct AboutUri {}
+
+impl AboutUri {
+    const LAPCE: &str = "https://lapce.dev";
+    const GITHUB: &str = "https://github.com/lapce/lapce";
+    const MATRIX: &str = "https://matrix.to/#/#lapce-editor:matrix.org";
+    const DISCORD: &str = "https://discord.gg/n8tGJ6Rn6D";
+    const CODICONS: &str = "https://github.com/microsoft/vscode-codicons";
+}
 
 pub struct AboutBox {
     content: WidgetPod<LapceTabData, AboutBoxContent>,
@@ -122,7 +126,6 @@ pub struct AboutBoxContent {
 
     logo_rect: Rect,
     close_rect: Rect,
-    // close_rect_icon: Rect,
     title: Option<(PietTextLayout, Point)>,
     links: Vec<(PietTextLayout, Point)>,
 
@@ -280,14 +283,17 @@ impl Widget<LapceTabData> for AboutBoxContent {
 
         let title_layout = ctx
             .text()
-            .new_text_layout("About Lapce")
+            .new_text_layout(format!(
+                "Lapce {} [ver. {}]",
+                *meta::RELEASE,
+                *meta::VERSION
+            ))
             .font(
                 data.config.ui.font_family(),
                 (data.config.ui.font_size() as f64 * 1.2).round(),
             )
             .default_attribute(TextAttribute::Weight(FontWeight::BOLD))
             .alignment(TextAlignment::Center)
-            .set_line_height(1.2)
             .max_width(self.width - self.padding * 2.0)
             .text_color(
                 data.config
@@ -307,32 +313,54 @@ impl Widget<LapceTabData> for AboutBoxContent {
             + title_size.height
             + self.padding / 2.0;
 
-        for msg in [
-            ("Website:", URI_LAPCE),
-            ("GitHub:", URI_GITHUB),
-            ("Discord:", URI_DISCORD),
-            ("Matrix:", URI_MATRIX),
+        for (msg, link) in [
+            ("Website", AboutUri::LAPCE),
+            ("GitHub", AboutUri::GITHUB),
+            ("Discord", AboutUri::DISCORD),
+            ("Matrix", AboutUri::MATRIX),
         ] {
             let msg_layout = ctx
                 .text()
-                .new_text_layout(format!("{} {}\n", msg.0, msg.1))
+                .new_text_layout(msg)
                 .font(
                     data.config.ui.font_family(),
                     (data.config.ui.font_size()) as f64,
                 )
-                .set_line_height(1.2)
+                .alignment(TextAlignment::Center)
                 .max_width(self.width - self.padding * 2.0)
                 .text_color(
                     data.config
-                        .get_color_unchecked(LapceTheme::EDITOR_FOREGROUND)
+                        .get_color_unchecked(LapceTheme::EDITOR_LINK)
                         .clone(),
                 )
                 .build()
                 .unwrap();
+
             self.links.append(&mut vec![(
                 msg_layout.clone(),
                 Point::new(self.padding, y),
             )]);
+
+            let site_rect = Size::new(
+                msg_layout.layout.width() as f64,
+                msg_layout.layout.height() as f64,
+            )
+            .to_rect()
+            .with_origin(Point::new(
+                self.width / 2.0 + (msg_layout.layout.width() as f64 / 2.0)
+                    - msg_layout.layout.width() as f64,
+                y,
+            ));
+
+            self.commands.push((
+                site_rect,
+                Command::new(
+                    LAPCE_UI_COMMAND,
+                    LapceUICommand::OpenURI(link.to_string()),
+                    Target::Auto,
+                ),
+            ));
+
             y += msg_layout.size().height + 5.0;
         }
 
@@ -340,7 +368,7 @@ impl Widget<LapceTabData> for AboutBoxContent {
             .to_rect()
             .with_origin(Point::new(self.width - 20.0, 0.0));
 
-        Size::new(self.width, y + self.button_height + self.padding)
+        Size::new(self.width, y + self.button_height + self.padding * 2.0)
     }
 
     fn paint(&mut self, ctx: &mut PaintCtx, data: &LapceTabData, _env: &Env) {
@@ -361,7 +389,7 @@ impl Widget<LapceTabData> for AboutBoxContent {
         );
 
         ctx.draw_svg(
-            &get_svg("lapce_logo").unwrap(),
+            &get_svg(LapceIcons::LAPCE_LOGO).unwrap(),
             self.logo_rect,
             Some(data.config.get_color_unchecked(LapceTheme::EDITOR_DIM)),
         );
@@ -372,19 +400,23 @@ impl Widget<LapceTabData> for AboutBoxContent {
         );
 
         let mut y = self.title.as_ref().unwrap().1.y
-            + self.title.as_ref().unwrap().0.size().height
-            + 15.0;
+            + self.title.as_ref().unwrap().0.size().height;
 
-        let ver_layout = ctx
+        for (msg, point) in &self.links {
+            y += msg.layout.height() as f64 / 2.0;
+            ctx.draw_text(&msg, *point);
+        }
+
+        let row_item = ctx
             .text()
-            .new_text_layout(format!("Version: {}", *VERSION))
-            .set_line_height(1.2)
-            .alignment(TextAlignment::Center)
-            .max_width(self.width - self.padding * 2.0)
+            .new_text_layout("Codicons (CC-BY-4.0)")
             .font(
                 data.config.ui.font_family(),
                 (data.config.ui.font_size()) as f64,
             )
+            .alignment(TextAlignment::Center)
+            .set_line_height(1.2)
+            .max_width(self.width - self.padding * 2.0)
             .text_color(
                 data.config
                     .get_color_unchecked(LapceTheme::EDITOR_FOREGROUND)
@@ -392,72 +424,42 @@ impl Widget<LapceTabData> for AboutBoxContent {
             )
             .build()
             .unwrap();
-        ctx.draw_text(&ver_layout, Point::new(self.padding, y));
-        y += ver_layout.size().height + 5.0;
 
-        for (msg, link) in [
-            ("Website", URI_LAPCE),
-            ("Discord", URI_DISCORD),
-            ("GitHub", URI_GITHUB),
-            ("Matrix", URI_MATRIX),
-        ] {
-            let left_item = ctx
-                .text()
-                .new_text_layout(msg)
-                .font(
-                    data.config.ui.font_family(),
-                    (data.config.ui.font_size()) as f64,
-                )
-                .alignment(TextAlignment::Center)
-                .set_line_height(1.2)
-                .max_width(self.width - self.padding * 2.0)
-                .text_color(
-                    data.config
-                        .get_color_unchecked(LapceTheme::EDITOR_LINK)
-                        .clone(),
-                )
-                .build()
-                .unwrap();
-            let site_rect = Size::new(
-                left_item.layout.width() as f64,
-                left_item.layout.height() as f64,
+        y += row_item.size().height * 3.0;
+        ctx.draw_text(&row_item, Point::new(self.padding, y));
+        y += row_item.size().height;
+
+        let row_item = ctx
+            .text()
+            .new_text_layout(AboutUri::CODICONS)
+            .font(
+                data.config.ui.font_family(),
+                (data.config.ui.font_size()) as f64,
             )
-            .to_rect()
-            .with_origin(Point::new(
-                self.width / 2.0 + (left_item.layout.width() as f64 / 2.0)
-                    - left_item.layout.width() as f64,
-                y,
-            ));
-
-            self.commands.push((
-                site_rect,
-                Command::new(
-                    LAPCE_UI_COMMAND,
-                    LapceUICommand::OpenURI(link.to_string()),
-                    Target::Auto,
-                ),
-            ));
-
-            ctx.draw_text(&left_item, Point::new(self.padding, y));
-            y += left_item.size().height + 5.0;
-        }
+            .alignment(TextAlignment::Center)
+            .set_line_height(1.2)
+            .max_width(self.width - self.padding * 2.0)
+            .text_color(
+                data.config
+                    .get_color_unchecked(LapceTheme::EDITOR_LINK)
+                    .clone(),
+            )
+            .build()
+            .unwrap();
+        ctx.draw_text(&row_item, Point::new(self.padding, y));
 
         if self.close_rect.contains(self.mouse_pos) {
-            let c = data
-                .config
-                .get_color_unchecked(LapceTheme::PANEL_BACKGROUND);
-            let c = c.as_rgba8();
-            let c = (
-                c.0.saturating_add(30),
-                c.1.saturating_add(30),
-                c.2.saturating_add(30),
-                c.3.saturating_add(30),
+            ctx.fill(
+                self.close_rect,
+                &data.config.get_hover_color(
+                    data.config
+                        .get_color_unchecked(LapceTheme::PANEL_BACKGROUND),
+                ),
             );
-            ctx.fill(self.close_rect, &druid::Color::rgba8(c.0, c.1, c.2, c.3));
         }
 
         ctx.draw_svg(
-            &get_svg("chrome-close.svg").unwrap(),
+            &get_svg(LapceIcons::WINDOW_CLOSE).unwrap(),
             self.close_rect.inflate(-2.0, -2.0),
             Some(
                 data.config

@@ -638,7 +638,7 @@ impl ListPaint<PaletteListData> for PaletteItem {
             hint_indices,
         } = match &self.content {
             PaletteItemContent::File(path, _) => {
-                file_paint_items(path, &self.indices)
+                file_paint_items(path, &self.indices, data)
             }
             PaletteItemContent::DocumentSymbol {
                 kind,
@@ -699,7 +699,7 @@ impl ListPaint<PaletteListData> for PaletteItem {
                 PaletteItemPaintInfo::new_text(text.clone(), self.indices.to_vec())
             }
             PaletteItemContent::ReferenceLocation(rel_path, _location) => {
-                file_paint_items(rel_path, &self.indices)
+                file_paint_items(rel_path, &self.indices, data)
             }
             PaletteItemContent::Workspace(w) => {
                 let text = w.path.as_ref().unwrap().to_str().unwrap();
@@ -722,10 +722,16 @@ impl ListPaint<PaletteListData> for PaletteItem {
                     .unwrap_or_else(|| "".to_string());
                 PaletteItemPaintInfo::new_text(text, self.indices.to_vec())
             }
-            PaletteItemContent::Theme(theme) => PaletteItemPaintInfo::new_text(
+            PaletteItemContent::ColorTheme(theme) => PaletteItemPaintInfo::new_text(
                 theme.to_string(),
                 self.indices.to_vec(),
             ),
+            PaletteItemContent::FileIconTheme(theme) => {
+                PaletteItemPaintInfo::new_text(
+                    theme.to_string(),
+                    self.indices.to_vec(),
+                )
+            }
             PaletteItemContent::Language(name) => PaletteItemPaintInfo::new_text(
                 name.to_string(),
                 self.indices.to_vec(),
@@ -753,7 +759,14 @@ impl ListPaint<PaletteListData> for PaletteItem {
                 (line_height - width) / 2.0 + 5.0,
                 (line_height - height) / 2.0 + line_height * line as f64,
             ));
-            ctx.draw_svg(svg, rect, None);
+            ctx.draw_svg(
+                svg,
+                rect,
+                Some(
+                    data.config
+                        .get_color_unchecked(LapceTheme::LAPCE_ICON_ACTIVE),
+                ),
+            );
         }
 
         let svg_x = match &self.content {
@@ -891,8 +904,12 @@ fn file_paint_symbols(
     }
 }
 
-fn file_paint_items(path: &Path, indices: &[usize]) -> PaletteItemPaintInfo {
-    let (svg, _) = file_svg(path);
+fn file_paint_items(
+    path: &Path,
+    indices: &[usize],
+    data: &ListData<PaletteItem, PaletteListData>,
+) -> PaletteItemPaintInfo {
+    let (svg, _) = file_svg(data.config.file_icon_theme.resolve_path_icon(path));
     let file_name = path
         .file_name()
         .and_then(|s| s.to_str())

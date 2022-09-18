@@ -8,18 +8,18 @@ use druid::{
     RenderContext, Size, Target, Widget, WidgetExt, WidgetId, WidgetPod,
     WindowConfig, WindowState,
 };
-use lapce_core::command::FocusCommand;
+use lapce_core::{command::FocusCommand, meta};
 use lapce_data::{
     command::{
         CommandKind, LapceCommand, LapceUICommand, LapceWorkbenchCommand,
         LAPCE_COMMAND, LAPCE_UI_COMMAND,
     },
-    config::LapceTheme,
+    config::{LapceIcons, LapceTheme},
     data::{FocusArea, LapceTabData, LapceWorkspaceType},
     list::ListData,
     menu::{MenuItem, MenuKind},
     palette::PaletteStatus,
-    proxy::{ProxyStatus, VERSION},
+    proxy::ProxyStatus,
 };
 
 #[cfg(not(target_os = "macos"))]
@@ -170,13 +170,13 @@ impl Title {
             }
         };
         self.rects.push((remote_rect, color));
-        let remote_svg = get_svg("remote.svg").unwrap();
+        let remote_svg = get_svg(LapceIcons::REMOTE).unwrap();
         self.svgs.push((
             remote_svg,
             Size::new(size.height, size.height)
                 .to_rect()
                 .with_origin(Point::new(x + 5.0, 0.0))
-                .inflate(-6.0, -6.0),
+                .inflate(-3.0, -3.0),
             Some(
                 data.config
                     .get_color_unchecked(LapceTheme::EDITOR_BACKGROUND)
@@ -252,7 +252,7 @@ impl Title {
             let command_rect = Size::ZERO.to_rect().with_origin(Point::new(x, 0.0));
 
             x += 5.0;
-            let folder_svg = get_svg("git-icon.svg").unwrap();
+            let folder_svg = get_svg(LapceIcons::VCS).unwrap();
             let folder_rect = Size::new(size.height, size.height)
                 .to_rect()
                 .with_origin(Point::new(x, 0.0));
@@ -261,7 +261,7 @@ impl Title {
                 folder_rect.inflate(-8.5, -8.5),
                 Some(
                     data.config
-                        .get_color_unchecked(LapceTheme::EDITOR_FOREGROUND)
+                        .get_color_unchecked(LapceTheme::LAPCE_ICON_ACTIVE)
                         .clone(),
                 ),
                 None,
@@ -337,43 +337,24 @@ impl Title {
 
         let offset = x;
 
-        let hover_color = {
-            let (r, g, b, a) = data
-                .config
-                .get_color_unchecked(LapceTheme::PANEL_BACKGROUND)
-                .to_owned()
-                .as_rgba8();
-            // TODO: hacky way to detect "lightness" of colour, should be fixed once we have dark/light themes
-            if r < 128 || g < 128 || b < 128 {
-                Color::rgba8(
-                    r.saturating_add(25),
-                    g.saturating_add(25),
-                    b.saturating_add(25),
-                    a,
-                )
-            } else {
-                Color::rgba8(
-                    r.saturating_sub(30),
-                    g.saturating_sub(30),
-                    b.saturating_sub(30),
-                    a,
-                )
-            }
-        };
-
         let settings_rect = Size::new(size.height, size.height)
             .to_rect()
             .with_origin(Point::new(x, 0.0));
-        let settings_svg = get_svg("settings.svg").unwrap();
+        let settings_svg = get_svg(LapceIcons::SETTINGS).unwrap();
         self.svgs.push((
             settings_svg,
             settings_rect.inflate(-10.0, -10.0),
             Some(
                 data.config
-                    .get_color_unchecked(LapceTheme::EDITOR_FOREGROUND)
+                    .get_color_unchecked(LapceTheme::LAPCE_ICON_ACTIVE)
                     .clone(),
             ),
-            Some(hover_color),
+            Some(
+                data.config.get_hover_color(
+                    data.config
+                        .get_color_unchecked(LapceTheme::PANEL_BACKGROUND),
+                ),
+            ),
         ));
         let latest_version = data
             .latest_release
@@ -417,7 +398,7 @@ impl Title {
                 desc: Some(if data.update_in_progress && latest_version.is_some() {
                     format!("Update in progress ({}) ", latest_version.unwrap())
                 } else if latest_version.is_some()
-                    && latest_version != Some(*VERSION)
+                    && latest_version != Some(*meta::VERSION)
                 {
                     format!("Restart to update ({})", latest_version.unwrap())
                 } else {
@@ -430,7 +411,7 @@ impl Title {
                     data: None,
                 },
                 enabled: latest_version.is_some()
-                    && latest_version != Some(*VERSION)
+                    && latest_version != Some(*meta::VERSION)
                     && !data.update_in_progress,
             }),
             MenuKind::Separator,
@@ -443,7 +424,7 @@ impl Title {
                 enabled: true,
             }),
         ];
-        if latest_version.is_some() && latest_version != Some(*VERSION) {
+        if latest_version.is_some() && latest_version != Some(*meta::VERSION) {
             let text_layout = piet_text
                 .new_text_layout("1")
                 .font(data.config.ui.font_family(), 10.0)
@@ -562,12 +543,12 @@ impl Title {
             .with_origin(Point::new(x - size.height, 0.0));
         let (folder_svg, folder_rect) = if data.workspace.path.is_none() {
             (
-                get_svg("default_folder.svg").unwrap(),
+                get_svg(LapceIcons::DIRECTORY_CLOSED).unwrap(),
                 folder_rect.inflate(-9.0, -9.0),
             )
         } else {
             (
-                get_svg("search.svg").unwrap(),
+                get_svg(LapceIcons::SEARCH).unwrap(),
                 folder_rect.inflate(-12.0, -12.0),
             )
         };
@@ -577,8 +558,8 @@ impl Title {
             folder_rect,
             Some(
                 data.config
-                    .get_color_unchecked(LapceTheme::EDITOR_FOREGROUND)
-                    .clone(),
+                    .get_color_unchecked(LapceTheme::LAPCE_ICON_ACTIVE)
+                    .to_owned(),
             ),
             None,
         ));
@@ -606,12 +587,12 @@ impl Title {
             .to_rect()
             .with_origin(Point::new(x + text_size.width - 8.0, 0.0));
         self.svgs.push((
-            get_svg("chevron-down.svg").unwrap(),
+            get_svg(LapceIcons::PALETTE_MENU).unwrap(),
             command_rect.inflate(-12.0, -12.0),
             Some(
                 data.config
-                    .get_color_unchecked(LapceTheme::EDITOR_FOREGROUND)
-                    .clone(),
+                    .get_color_unchecked(LapceTheme::LAPCE_ICON_ACTIVE)
+                    .to_owned(),
             ),
             None,
         ));
@@ -859,7 +840,7 @@ impl Widget<LapceTabData> for Title {
             (
                 Some(
                     data.config
-                        .get_color_unchecked(LapceTheme::EDITOR_DIM)
+                        .get_color_unchecked(LapceTheme::LAPCE_ICON_INACTIVE)
                         .clone(),
                 ),
                 None,
@@ -879,18 +860,19 @@ impl Widget<LapceTabData> for Title {
             (
                 Some(
                     data.config
-                        .get_color_unchecked(LapceTheme::EDITOR_FOREGROUND)
+                        .get_color_unchecked(LapceTheme::LAPCE_ICON_ACTIVE)
                         .clone(),
                 ),
                 Some(
-                    data.config
-                        .get_color_unchecked(LapceTheme::PANEL_CURRENT)
-                        .clone(),
+                    data.config.get_hover_color(
+                        data.config
+                            .get_color_unchecked(LapceTheme::PANEL_BACKGROUND),
+                    ),
                 ),
             )
         };
         self.svgs.push((
-            get_svg("arrow-left.svg").unwrap(),
+            get_svg(LapceIcons::LOCATION_BACKWARD).unwrap(),
             arrow_left_rect.inflate(-10.5, -10.5),
             arrow_left_svg_color,
             arrow_left_svg_hover_color,
@@ -937,7 +919,7 @@ impl Widget<LapceTabData> for Title {
             )
         };
         self.svgs.push((
-            get_svg("arrow-right.svg").unwrap(),
+            get_svg(LapceIcons::LOCATION_FORWARD).unwrap(),
             arrow_right_rect.inflate(-10.5, -10.5),
             arrow_right_svg_color,
             arrow_right_svg_hover_color,
