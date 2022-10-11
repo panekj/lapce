@@ -727,6 +727,7 @@ impl LapceConfig {
             }
             LapceWorkspaceType::RemoteSSH(_, _) => {}
             LapceWorkspaceType::RemoteWSL => {}
+            LapceWorkspaceType::RemoteDocker(_) => {}
         }
 
         config
@@ -1156,9 +1157,12 @@ impl LapceConfig {
                     toml::Value::String(match workspace.kind {
                         LapceWorkspaceType::Local => "local".to_string(),
                         LapceWorkspaceType::RemoteSSH(user, host) => {
-                            format!("ssh://{}@{}", user, host)
+                            format!("ssh://{user}@{host}")
                         }
                         LapceWorkspaceType::RemoteWSL => "wsl".to_string(),
+                        LapceWorkspaceType::RemoteDocker(container) => {
+                            format!("docker://{container}")
+                        }
                     }),
                 );
                 table.insert(

@@ -49,6 +49,7 @@ pub enum PaletteType {
     Reference,
     Theme,
     SshHost,
+    DockerHost,
     Language,
 }
 
@@ -65,6 +66,7 @@ impl PaletteType {
             PaletteType::Reference => "".to_string(),
             PaletteType::Theme => "".to_string(),
             PaletteType::SshHost => "".to_string(),
+            PaletteType::DockerHost => "".to_string(),
             PaletteType::Language => "".to_string(),
         }
     }
@@ -86,6 +88,7 @@ impl PaletteType {
         match current_type {
             PaletteType::Reference
             | PaletteType::SshHost
+            | PaletteType::DockerHost
             | PaletteType::Theme
             | PaletteType::Language => {
                 return current_type.clone();
@@ -141,6 +144,7 @@ pub enum PaletteItemContent {
     ReferenceLocation(PathBuf, EditorLocation<Position>),
     Workspace(LapceWorkspace),
     SshHost(String, String),
+    DockerHost(String),
     Command(LapceCommand),
     Theme(String),
     Language(String),
@@ -272,6 +276,21 @@ impl PaletteItemContent {
                             kind: LapceWorkspaceType::RemoteSSH(
                                 user.to_string(),
                                 host.to_string(),
+                            ),
+                            path: None,
+                            last_open: 0,
+                        }),
+                        Target::Auto,
+                    ));
+                }
+            }
+            PaletteItemContent::DockerHost(container) => {
+                if !preview {
+                    ctx.submit_command(Command::new(
+                        LAPCE_UI_COMMAND,
+                        LapceUICommand::SetWorkspace(LapceWorkspace {
+                            kind: LapceWorkspaceType::RemoteDocker(
+                                container.to_string(),
                             ),
                             path: None,
                             last_open: 0,
@@ -476,6 +495,7 @@ impl PaletteData {
             PaletteType::Theme => &self.input,
             PaletteType::Language => &self.input,
             PaletteType::SshHost => &self.input,
+            PaletteType::DockerHost => &self.input,
             PaletteType::Line => &self.input[1..],
             PaletteType::DocumentSymbol => &self.input[1..],
             PaletteType::WorkspaceSymbol => &self.input[1..],
@@ -602,6 +622,9 @@ impl PaletteViewData {
             PaletteType::SshHost => {
                 self.get_ssh_hosts(ctx);
             }
+            PaletteType::DockerHost => {
+                self.get_docker_hosts(ctx);
+            }
             PaletteType::GlobalSearch => {
                 self.get_global_search(ctx);
             }
@@ -659,6 +682,7 @@ impl PaletteViewData {
             PaletteType::Theme => 0,
             PaletteType::Language => 0,
             PaletteType::SshHost => 0,
+            PaletteType::DockerHost => 0,
             PaletteType::Line => 1,
             PaletteType::DocumentSymbol => 1,
             PaletteType::WorkspaceSymbol => 1,
@@ -723,6 +747,20 @@ impl PaletteViewData {
                     LAPCE_UI_COMMAND,
                     LapceUICommand::SetWorkspace(LapceWorkspace {
                         kind: LapceWorkspaceType::RemoteSSH(user, host),
+                        path: None,
+                        last_open: 0,
+                    }),
+                    Target::Auto,
+                ));
+                return;
+            }
+            if self.palette.palette_type == PaletteType::DockerHost {
+                ctx.submit_command(Command::new(
+                    LAPCE_UI_COMMAND,
+                    LapceUICommand::SetWorkspace(LapceWorkspace {
+                        kind: LapceWorkspaceType::RemoteDocker(
+                            self.palette.get_input().to_string(),
+                        ),
                         path: None,
                         last_open: 0,
                     }),
@@ -844,6 +882,27 @@ impl PaletteViewData {
             .collect();
     }
 
+    fn get_docker_hosts(&mut self, _ctx: &mut EventCtx) {
+        let workspaces = LapceConfig::recent_workspaces().unwrap_or_default();
+        let mut hosts = HashSet::new();
+        for workspace in workspaces.iter() {
+            if let LapceWorkspaceType::RemoteDocker(container) = &workspace.kind {
+                hosts.insert(container);
+            }
+        }
+
+        let palette = Arc::make_mut(&mut self.palette);
+        palette.total_items = hosts
+            .iter()
+            .map(|container| PaletteItem {
+                content: PaletteItemContent::DockerHost(container.to_string()),
+                filter_text: format!("{container}"),
+                score: 0,
+                indices: vec![],
+            })
+            .collect();
+    }
+
     fn get_workspaces(&mut self, _ctx: &mut EventCtx) {
         let workspaces = LapceConfig::recent_workspaces().unwrap_or_default();
         let palette = Arc::make_mut(&mut self.palette);
@@ -860,10 +919,13 @@ impl PaletteViewData {
                 let filter_text = match &w.kind {
                     LapceWorkspaceType::Local => text,
                     LapceWorkspaceType::RemoteSSH(user, host) => {
-                        format!("[{}@{}] {}", user, host, text)
+                        format!("[{user}@{host}] {text}")
                     }
                     LapceWorkspaceType::RemoteWSL => {
                         format!("[wsl] {text}")
+                    }
+                    LapceWorkspaceType::RemoteDocker(container) => {
+                        format!("[{container}] {text}")
                     }
                 };
                 PaletteItem {

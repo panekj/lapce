@@ -17,7 +17,7 @@ _TMP='/tmp'
 _VER="${1}"
 # proxy directory
 # eval to resolve '~' into proper user dir
-eval _DIR="'${2}'"
+eval _DIR="${2}"
 
 if [ -e "${_DIR}/lapce" ]; then
   chmod +x "${_DIR}/lapce"

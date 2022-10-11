@@ -1608,6 +1608,13 @@ impl LapceTabData {
                 }),
                 Target::Auto,
             )),
+            LapceWorkbenchCommand::ConnectDockerHost => {
+                ctx.submit_command(Command::new(
+                    LAPCE_UI_COMMAND,
+                    LapceUICommand::RunPalette(Some(PaletteType::DockerHost)),
+                    Target::Widget(self.palette.widget_id),
+                ));
+            }
             LapceWorkbenchCommand::DisconnectRemote => {
                 ctx.submit_command(Command::new(
                     LAPCE_UI_COMMAND,
@@ -4073,13 +4080,14 @@ pub enum LapceWorkspaceType {
     Local,
     RemoteSSH(String, String),
     RemoteWSL,
+    RemoteDocker(String),
 }
 
 impl LapceWorkspaceType {
     pub fn is_remote(&self) -> bool {
         matches!(
             self,
-            LapceWorkspaceType::RemoteSSH(_, _) | LapceWorkspaceType::RemoteWSL
+            Self::RemoteSSH(_, _) | Self::RemoteWSL | Self::RemoteDocker(_)
         )
     }
 }
@@ -4087,11 +4095,14 @@ impl LapceWorkspaceType {
 impl std::fmt::Display for LapceWorkspaceType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            LapceWorkspaceType::Local => f.write_str("Local"),
-            LapceWorkspaceType::RemoteSSH(user, host) => {
+            Self::Local => f.write_str("Local"),
+            Self::RemoteSSH(user, host) => {
                 write!(f, "ssh://{}@{}", user, host)
             }
-            LapceWorkspaceType::RemoteWSL => f.write_str("WSL"),
+            Self::RemoteWSL => f.write_str("WSL"),
+            Self::RemoteDocker(container) => {
+                write!(f, "docker:{}", container)
+            }
         }
     }
 }

@@ -29,6 +29,7 @@ use crate::{
 };
 
 #[allow(clippy::large_enum_variant)]
+#[derive(Debug)]
 pub enum ProxyRpc {
     Request(RequestId, ProxyRequest),
     Notification(ProxyNotification),

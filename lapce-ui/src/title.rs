@@ -161,13 +161,13 @@ impl Title {
             .with_origin(Point::new(x, 0.0));
         let color = match &data.workspace.kind {
             LapceWorkspaceType::Local => Color::rgb8(64, 120, 242),
-            LapceWorkspaceType::RemoteSSH(_, _) | LapceWorkspaceType::RemoteWSL => {
-                match *data.proxy_status {
-                    ProxyStatus::Connecting => Color::rgb8(193, 132, 1),
-                    ProxyStatus::Connected => Color::rgb8(80, 161, 79),
-                    ProxyStatus::Disconnected => Color::rgb8(228, 86, 73),
-                }
-            }
+            LapceWorkspaceType::RemoteSSH(_, _)
+            | LapceWorkspaceType::RemoteWSL
+            | LapceWorkspaceType::RemoteDocker(_) => match *data.proxy_status {
+                ProxyStatus::Connecting => Color::rgb8(193, 132, 1),
+                ProxyStatus::Connected => Color::rgb8(80, 161, 79),
+                ProxyStatus::Disconnected => Color::rgb8(228, 86, 73),
+            },
         };
         self.rects.push((remote_rect, color));
         let remote_svg = get_svg("remote.svg").unwrap();
@@ -188,14 +188,28 @@ impl Title {
         let command_rect =
             command_rect.with_size(Size::new(x - command_rect.x0, size.height));
 
-        let mut menu_items = vec![MenuKind::Item(MenuItem {
-            desc: None,
-            command: LapceCommand {
-                kind: CommandKind::Workbench(LapceWorkbenchCommand::ConnectSshHost),
-                data: None,
-            },
-            enabled: true,
-        })];
+        let mut menu_items = vec![
+            MenuKind::Item(MenuItem {
+                desc: None,
+                command: LapceCommand {
+                    kind: CommandKind::Workbench(
+                        LapceWorkbenchCommand::ConnectSshHost,
+                    ),
+                    data: None,
+                },
+                enabled: true,
+            }),
+            MenuKind::Item(MenuItem {
+                desc: None,
+                command: LapceCommand {
+                    kind: CommandKind::Workbench(
+                        LapceWorkbenchCommand::ConnectDockerHost,
+                    ),
+                    data: None,
+                },
+                enabled: true,
+            }),
+        ];
 
         #[cfg(target_os = "windows")]
         {
@@ -534,6 +548,9 @@ impl Title {
                 format!(" [SSH: {host}]")
             }
             LapceWorkspaceType::RemoteWSL => " [WSL]".to_string(),
+            LapceWorkspaceType::RemoteDocker(container) => {
+                format!(" [Docker: {container}]")
+            }
         };
         let text = format!("{path}{remote}");
         let text_layout = piet_text

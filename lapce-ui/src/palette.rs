@@ -711,6 +711,9 @@ impl ListPaint<PaletteListData> for PaletteItem {
                     LapceWorkspaceType::RemoteWSL => {
                         format!("[wsl] {text}")
                     }
+                    LapceWorkspaceType::RemoteDocker(container) => {
+                        format!("[{container}] {text}")
+                    }
                 };
                 PaletteItemPaintInfo::new_text(text, self.indices.to_vec())
             }
@@ -739,6 +742,12 @@ impl ListPaint<PaletteListData> for PaletteItem {
             PaletteItemContent::SshHost(user, host) => {
                 PaletteItemPaintInfo::new_text(
                     format!("{user}@{host}"),
+                    self.indices.to_vec(),
+                )
+            }
+            PaletteItemContent::DockerHost(container) => {
+                PaletteItemPaintInfo::new_text(
+                    format!("{container}"),
                     self.indices.to_vec(),
                 )
             }

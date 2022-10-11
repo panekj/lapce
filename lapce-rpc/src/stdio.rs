@@ -73,6 +73,7 @@ where
         }
     };
     let msg = format!("{}\n", serde_json::to_string(&value)?);
+    dbg!(&msg);
     out.write_all(msg.as_bytes())?;
     out.flush()?;
     Ok(())
@@ -89,6 +90,7 @@ where
 {
     let mut buf = String::new();
     let _s = inp.read_line(&mut buf)?;
+    dbg!(&buf);
     let value: Value = serde_json::from_str(&buf)?;
     let object = RpcObject(value);
     let is_response = object.is_response();

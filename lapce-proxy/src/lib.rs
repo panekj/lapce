@@ -75,6 +75,32 @@ pub fn mainloop() {
         let _ = try_open_in_existing_process(&paths);
         return;
     }
+
+    let log_file =
+        fern::log_file(Directory::logs_directory().unwrap().join("proxy.log"))
+            .unwrap();
+    let log_dispatch = fern::Dispatch::new()
+        .format(|out, message, record| {
+            out.finish(format_args!(
+                "{}[{}][{}] {}",
+                chrono::Local::now().format("[%Y-%m-%d][%H:%M:%S]"),
+                record.target(),
+                record.level(),
+                message
+            ))
+        })
+        .level(log::LevelFilter::Off)
+        .chain(
+            fern::Dispatch::new()
+                .level(log::LevelFilter::Debug)
+                .chain(log_file),
+        );
+
+    match log_dispatch.apply() {
+        Ok(()) => (),
+        Err(e) => eprintln!("Initialising logging failed {e:?}"),
+    }
+
     let core_rpc = CoreRpcHandler::new();
     let proxy_rpc = ProxyRpcHandler::new();
     let mut dispatcher = Dispatcher::new(core_rpc.clone(), proxy_rpc.clone());

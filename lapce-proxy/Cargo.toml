@@ -45,3 +45,5 @@ lapce-core = { path = "../lapce-core" }
 lapce-rpc = { path = "../lapce-rpc" }
 trash = "2.1"
 log = "0.4.17"
+chrono = "0.4.19"
+fern = "0.6.0"

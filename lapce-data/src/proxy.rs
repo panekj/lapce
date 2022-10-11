@@ -347,6 +347,9 @@ impl LapceProxy {
             LapceWorkspaceType::RemoteSSH(user, host) => {
                 self.start_remote(SshRemote { user, host })?;
             }
+            LapceWorkspaceType::RemoteDocker(container) => {
+                self.start_remote(DockerRemote { container })?;
+            }
             LapceWorkspaceType::RemoteWSL => {
                 let distro = WslDistro::all()?
                     .into_iter()
@@ -414,7 +417,10 @@ impl LapceProxy {
                 *APPLICATION_NAME
             ),
             _ => {
-                format!("~/.local/share/{}/proxy", *APPLICATION_NAME).to_lowercase()
+                format!(
+                    "~/.local/share/{}/proxy",
+                    (*APPLICATION_NAME).to_lowercase()
+                )
             }
         };
 
@@ -565,8 +571,9 @@ impl LapceProxy {
                 .spawn()?,
             _ => remote
                 .command_builder()
-                .arg(&remote_proxy_file)
-                .arg("--proxy")
+                .args([&remote_proxy_file, "--proxy"])
+                // .arg(&remote_proxy_file)
+                // .arg("--proxy")
                 .stdin(Stdio::piped())
                 .stdout(Stdio::piped())
                 .spawn()?,
@@ -591,6 +598,7 @@ impl LapceProxy {
         let local_writer_tx = writer_tx.clone();
         thread::spawn(move || {
             for msg in local_proxy_rpc.rx() {
+                dbg!(&msg);
                 match msg {
                     ProxyRpc::Request(id, rpc) => {
                         let _ = local_writer_tx.send(RpcMessage::Request(id, rpc));
@@ -611,6 +619,7 @@ impl LapceProxy {
         let proxy_rpc = self.proxy_rpc.clone();
         thread::spawn(move || {
             for msg in reader_rx {
+                dbg!(&msg);
                 match msg {
                     RpcMessage::Request(id, req) => {
                         let writer_tx = writer_tx.clone();
@@ -824,6 +833,34 @@ impl Remote for SshRemote {
 
     fn command_builder(&self) -> Command {
         Self::command_builder(&self.user, &self.host)
+    }
+}
+
+struct DockerRemote {
+    container: String,
+}
+
+impl Remote for DockerRemote {
+    fn upload_file(&self, local: impl AsRef<Path>, remote: &str) -> Result<()> {
+        let output = new_command("docker")
+            .arg("cp")
+            .arg(local.as_ref())
+            .arg(dbg!(format!("{}:{remote}", self.container)))
+            .output()?;
+
+        log::debug!(target: "lapce_data::proxy::upload_file", "{}", String::from_utf8_lossy(&output.stderr));
+        log::debug!(target: "lapce_data::proxy::upload_file", "{}", String::from_utf8_lossy(&output.stdout));
+
+        Ok(())
+    }
+
+    fn command_builder(&self) -> Command {
+        let mut cmd = new_command("docker");
+        cmd.arg("exec");
+        cmd.arg("-i");
+        cmd.arg(&self.container);
+
+        cmd
     }
 }
 

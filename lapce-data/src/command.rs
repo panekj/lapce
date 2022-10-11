@@ -302,6 +302,10 @@ pub enum LapceWorkbenchCommand {
     #[strum(message = "Connect to WSL")]
     ConnectWsl,
 
+    #[strum(serialize = "connect_docker_host")]
+    #[strum(message = "Connect to Docker Host")]
+    ConnectDockerHost,
+
     #[strum(serialize = "disconnect_remote")]
     #[strum(message = "Disconnect From Remote")]
     DisconnectRemote,
