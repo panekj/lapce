@@ -726,12 +726,10 @@ impl ListPaint<PaletteListData> for PaletteItem {
                 theme.to_string(),
                 self.indices.to_vec(),
             ),
-            PaletteItemContent::FileIconTheme(theme) => {
-                PaletteItemPaintInfo::new_text(
-                    theme.to_string(),
-                    self.indices.to_vec(),
-                )
-            }
+            PaletteItemContent::IconTheme(theme) => PaletteItemPaintInfo::new_text(
+                theme.to_string(),
+                self.indices.to_vec(),
+            ),
             PaletteItemContent::Language(name) => PaletteItemPaintInfo::new_text(
                 name.to_string(),
                 self.indices.to_vec(),
@@ -909,7 +907,7 @@ fn file_paint_items(
     indices: &[usize],
     data: &ListData<PaletteItem, PaletteListData>,
 ) -> PaletteItemPaintInfo {
-    let (svg, _) = file_svg(data.config.file_icon_theme.resolve_path_icon(path));
+    let (svg, _) = file_svg(data.config.resolve_file_icon(path));
     let file_name = path
         .file_name()
         .and_then(|s| s.to_str())

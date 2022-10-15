@@ -326,7 +326,7 @@ impl Widget<LapceTabData> for ProblemContent {
             }
 
             let (svg, _svg_color) =
-                file_svg(data.config.file_icon_theme.resolve_path_icon(path));
+                file_svg(data.config.resolve_file_icon(path));
             let rect = Size::new(line_height, line_height)
                 .to_rect()
                 .with_origin(Point::new(0.0, line_height * current_line as f64))

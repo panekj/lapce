@@ -100,7 +100,7 @@ fn paint_single_file_node_item(
         );
     } else {
         let (svg, _svg_color) =
-            file_svg(config.file_icon_theme.resolve_path_icon(&item.path_buf));
+            file_svg(config.resolve_file_icon(&item.path_buf));
         let rect = Size::new(svg_size, svg_size)
             .to_rect()
             .with_origin(Point::new(1.0 + 16.0 + padding, svg_y));
@@ -1031,9 +1031,8 @@ impl OpenEditorList {
                 pristine = editor_buffer.doc.buffer().is_pristine();
 
                 if let BufferContent::File(path) = &editor_buffer.editor.content {
-                    (svg, _) = file_svg(
-                        data.config.file_icon_theme.resolve_path_icon(path),
-                    );
+                    (svg, _) =
+                        file_svg(data.config.resolve_file_icon(path));
                     if let Some(file_name) = path.file_name() {
                         if let Some(s) = file_name.to_str() {
                             text = s.to_string();

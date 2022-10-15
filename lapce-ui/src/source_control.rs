@@ -294,7 +294,7 @@ impl Widget<LapceTabData> for SourceControlFileList {
                 }
             }
             let (svg, _svg_color) =
-                file_svg(data.config.file_icon_theme.resolve_path_icon(&path));
+                file_svg(data.config.resolve_file_icon(&path));
             let width = 13.0;
             let height = 13.0;
             let rect = Size::new(width, height).to_rect().with_origin(Point::new(

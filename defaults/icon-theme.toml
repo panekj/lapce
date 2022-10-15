@@ -1,8 +1,8 @@
-[theme]
+[icon-theme]
 name = "Lapce Codicons"
 
-[ui]
+[icon-theme.ui]
 
-[filename]
+[icon-theme.filename]
 
-[extension]
+[icon-theme.extension]

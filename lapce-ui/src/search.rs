@@ -450,7 +450,7 @@ impl Widget<LapceTabData> for SearchContent {
             }
 
             let (svg, svg_color) =
-                file_svg(data.config.file_icon_theme.resolve_path_icon(path));
+                file_svg(data.config.resolve_file_icon(path));
             let rect = Size::new(self.line_height, self.line_height)
                 .to_rect()
                 .with_origin(Point::new(0.0, self.line_height * i as f64))

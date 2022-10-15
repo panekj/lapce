@@ -1,7 +1,7 @@
 [core]
 modal = false
 color-theme = "Lapce Dark"
-file-icon-theme = "Lapce Codicons"
+icon-theme = "Lapce Codicons"
 custom-titlebar = true
 
 [editor]
@@ -177,9 +177,9 @@ magenta = "#C678DD"
 "terminal.bright_magenta" = "$magenta"
 "terminal.bright_black" = "#545862"
 
-[file-icon-theme]
-name = "Lapce Codicons"
+[icon-theme]
+name = ""
 
-[file-icon-theme.ui]
-[file-icon-theme.filename]
-[file-icon-theme.extension]
+[icon-theme.ui]
+[icon-theme.filename]
+[icon-theme.extension]

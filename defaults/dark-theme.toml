@@ -1,4 +1,4 @@
-[theme]
+[color-theme]
 name = "Lapce Dark"
 color-preference = "dark"
 
@@ -12,7 +12,7 @@ activity-width = 50
 scroll-width = 10
 drop-shadow-width = 0
 
-[theme.base]
+[color-theme.base]
 white = "#ABB2BF"
 black = "#282C34"
 grey = "#3E4451"
@@ -25,7 +25,7 @@ purple = "#C678DD"
 cyan = "#56B6C2"
 magenta = "#C678DD"
 
-[theme.syntax]
+[color-theme.syntax]
 "comment" = "#5C6370"
 "constant" = "$yellow"
 "type" = "$yellow"
@@ -60,7 +60,7 @@ magenta = "#C678DD"
 "variable.other.member" = "$green"
 "tag" = "$blue"
 
-[theme.ui]
+[color-theme.ui]
 "lapce.active_tab" = "#528BFF"
 "lapce.inactive_tab" = "#5C6370"
 "lapce.error" = "$red"

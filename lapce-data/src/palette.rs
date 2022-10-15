@@ -48,7 +48,7 @@ pub enum PaletteType {
     Command,
     Reference,
     ColorTheme,
-    FileIconTheme,
+    IconTheme,
     SshHost,
     Language,
 }
@@ -65,7 +65,7 @@ impl PaletteType {
             PaletteType::File
             | PaletteType::Reference
             | PaletteType::ColorTheme
-            | PaletteType::FileIconTheme
+            | PaletteType::IconTheme
             | PaletteType::SshHost
             | PaletteType::Language => "".to_string(),
         }
@@ -89,7 +89,7 @@ impl PaletteType {
             PaletteType::Reference
             | PaletteType::SshHost
             | PaletteType::ColorTheme
-            | PaletteType::FileIconTheme
+            | PaletteType::IconTheme
             | PaletteType::Language => {
                 return current_type.clone();
             }
@@ -146,7 +146,7 @@ pub enum PaletteItemContent {
     SshHost(String, String),
     Command(LapceCommand),
     ColorTheme(String),
-    FileIconTheme(String),
+    IconTheme(String),
     Language(String),
 }
 
@@ -239,10 +239,10 @@ impl PaletteItemContent {
                     Target::Auto,
                 ));
             }
-            PaletteItemContent::FileIconTheme(theme) => {
+            PaletteItemContent::IconTheme(theme) => {
                 ctx.submit_command(Command::new(
                     LAPCE_UI_COMMAND,
-                    LapceUICommand::SetFileIconTheme(theme.to_string(), preview),
+                    LapceUICommand::SetIconTheme(theme.to_string(), preview),
                     Target::Auto,
                 ));
             }
@@ -485,7 +485,7 @@ impl PaletteData {
             PaletteType::File
             | PaletteType::Reference
             | PaletteType::ColorTheme
-            | PaletteType::FileIconTheme
+            | PaletteType::IconTheme
             | PaletteType::Language
             | PaletteType::SshHost => &self.input,
             PaletteType::Line
@@ -501,7 +501,7 @@ impl PaletteData {
 impl PaletteViewData {
     pub fn cancel(&mut self, ctx: &mut EventCtx) {
         match self.palette.palette_type {
-            PaletteType::ColorTheme | PaletteType::FileIconTheme => {
+            PaletteType::ColorTheme | PaletteType::IconTheme => {
                 ctx.submit_command(Command::new(
                     LAPCE_UI_COMMAND,
                     LapceUICommand::ReloadConfig,
@@ -628,10 +628,10 @@ impl PaletteViewData {
                 self.get_color_themes(ctx, &config);
                 self.preselect_matching(ctx, &config.color_theme.name);
             }
-            PaletteType::FileIconTheme => {
+            PaletteType::IconTheme => {
                 let config = self.config.clone();
-                self.get_file_icon_themes(ctx, &config);
-                self.preselect_matching(ctx, &config.file_icon_theme.name);
+                self.get_icon_themes(ctx, &config);
+                self.preselect_matching(ctx, &config.icon_theme.name);
             }
             PaletteType::Language => {
                 self.get_languages(ctx);
@@ -677,7 +677,7 @@ impl PaletteViewData {
             PaletteType::File
             | PaletteType::Reference
             | PaletteType::ColorTheme
-            | PaletteType::FileIconTheme
+            | PaletteType::IconTheme
             | PaletteType::Language
             | PaletteType::SshHost => 0,
             PaletteType::Line
@@ -912,14 +912,14 @@ impl PaletteViewData {
             .collect();
     }
 
-    fn get_file_icon_themes(&mut self, _ctx: &mut EventCtx, config: &LapceConfig) {
+    fn get_icon_themes(&mut self, _ctx: &mut EventCtx, config: &LapceConfig) {
         let palette = Arc::make_mut(&mut self.palette);
         palette.total_items = config
-            .available_file_icon_themes
+            .available_icon_themes
             .values()
             .sorted_by_key(|(n, _)| n)
             .map(|(n, _)| PaletteItem {
-                content: PaletteItemContent::FileIconTheme(n.to_string()),
+                content: PaletteItemContent::IconTheme(n.to_string()),
                 filter_text: n.to_string(),
                 score: 0,
                 indices: vec![],

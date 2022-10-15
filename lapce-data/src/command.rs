@@ -111,7 +111,7 @@ impl LapceCommand {
                 | LapceWorkbenchCommand::PaletteCommand
                 | LapceWorkbenchCommand::ChangeFileLanguage
                 | LapceWorkbenchCommand::ChangeColorTheme
-                | LapceWorkbenchCommand::ChangeFileIconTheme
+                | LapceWorkbenchCommand::ChangeIconTheme
                 | LapceWorkbenchCommand::ConnectSshHost
                 | LapceWorkbenchCommand::ConnectWsl
                 | LapceWorkbenchCommand::PaletteWorkspace => return true,
@@ -223,9 +223,9 @@ pub enum LapceWorkbenchCommand {
     #[strum(message = "Change Color Theme")]
     ChangeColorTheme,
 
-    #[strum(serialize = "change_file_icon_theme")]
-    #[strum(message = "Change File Icon Theme")]
-    ChangeFileIconTheme,
+    #[strum(serialize = "change_icon_theme")]
+    #[strum(message = "Change Icon Theme")]
+    ChangeIconTheme,
 
     #[strum(serialize = "open_settings")]
     #[strum(message = "Open Settings")]
@@ -538,7 +538,7 @@ pub enum LapceUICommand {
     CancelFilePicker,
     SetWorkspace(LapceWorkspace),
     SetColorTheme(String, bool),
-    SetFileIconTheme(String, bool),
+    SetIconTheme(String, bool),
     UpdateKeymap(KeyMap, Vec<KeyPress>),
     OpenURI(String),
     OpenPaths {

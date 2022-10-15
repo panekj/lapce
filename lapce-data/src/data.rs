@@ -1294,10 +1294,10 @@ impl LapceTabData {
                     Target::Widget(self.palette.widget_id),
                 ));
             }
-            LapceWorkbenchCommand::ChangeFileIconTheme => {
+            LapceWorkbenchCommand::ChangeIconTheme => {
                 ctx.submit_command(Command::new(
                     LAPCE_UI_COMMAND,
-                    LapceUICommand::RunPalette(Some(PaletteType::FileIconTheme)),
+                    LapceUICommand::RunPalette(Some(PaletteType::IconTheme)),
                     Target::Widget(self.palette.widget_id),
                 ));
             }

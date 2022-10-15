@@ -149,7 +149,7 @@ impl LapceEditorHeader {
             ctx.with_save(|ctx| {
                 ctx.clip(clip_rect);
                 let (svg, _svg_color) =
-                    file_svg(data.config.file_icon_theme.resolve_path_icon(&path));
+                    file_svg(data.config.resolve_file_icon(&path));
 
                 let font_size = data.config.ui.font_size() as f64;
 

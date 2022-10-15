@@ -1331,7 +1331,9 @@ impl ThemeSettings {
             );
             doc.reload(
                 Rope::from(match self.kind {
-                    ThemeKind::Base => data.config.color_theme.base.get(color).unwrap(),
+                    ThemeKind::Base => {
+                        data.config.color_theme.base.get(color).unwrap()
+                    }
                     ThemeKind::UI => data.config.color_theme.ui.get(color).unwrap(),
                     ThemeKind::Syntax => {
                         data.config.color_theme.syntax.get(color).unwrap()
@@ -1525,7 +1527,8 @@ impl Widget<LapceTabData> for ThemeSettings {
                         .unwrap()
                         .to_string();
                     (
-                        data.config.color_theme.base.get(&self.keys[i]) != Some(&default),
+                        data.config.color_theme.base.get(&self.keys[i])
+                            != Some(&default),
                         default,
                     )
                 }
@@ -1534,7 +1537,8 @@ impl Widget<LapceTabData> for ThemeSettings {
                         data.config.default_color_theme.ui.get(&self.keys[i])
                     {
                         (
-                            data.config.color_theme.ui.get(&self.keys[i]) != Some(default),
+                            data.config.color_theme.ui.get(&self.keys[i])
+                                != Some(default),
                             default.to_string(),
                         )
                     } else {
