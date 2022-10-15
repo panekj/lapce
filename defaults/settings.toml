@@ -53,11 +53,11 @@ hover-font-family = ""
 hover-font-size = 0
 trim-search-results-whitespace = true
 
-[theme]
+[color-theme]
 name = ""
 color-preference = ""
 
-[theme.base]
+[color-theme.base]
 white = "#ABB2BF"
 black = "#282C34"
 grey = "#3E4451"
@@ -70,7 +70,7 @@ purple = "#C678DD"
 cyan = "#56B6C2"
 magenta = "#C678DD"
 
-[theme.syntax]
+[color-theme.syntax]
 "comment" = "#5C6370"
 "constant" = "$yellow"
 "type" = "$yellow"
@@ -100,7 +100,7 @@ magenta = "#C678DD"
 "embedded" = "$cyan"
 "symbol" = "$yellow"
 
-[theme.ui]
+[color-theme.ui]
 "lapce.active_tab" = "#528BFF"
 "lapce.inactive_tab" = "#5C6370"
 "lapce.error" = "$red"
@@ -176,3 +176,10 @@ magenta = "#C678DD"
 "terminal.bright_cyan" = "$cyan"
 "terminal.bright_magenta" = "$magenta"
 "terminal.bright_black" = "#545862"
+
+[file-icon-theme]
+name = "Lapce Codicons"
+
+[file-icon-theme.ui]
+[file-icon-theme.filename]
+[file-icon-theme.extension]

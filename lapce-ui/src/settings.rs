@@ -606,7 +606,73 @@ fn create_settings_item(
         ),
         serde_json::Value::Array(_)
         | serde_json::Value::Object(_)
-        | serde_json::Value::Null => panic!("Unknown setting value kind"),
+        | serde_json::Value::Null => WidgetPod::new(
+            LapcePadding::new(insets, EmptySettingsItem::new(key, kind, desc))
+                .boxed(),
+        ),
+    }
+}
+
+/// An uneditable settings item. Typically this is because it must
+/// be edited directly in the `settings.toml` file.
+struct EmptySettingsItem {
+    info: SettingsItemInfo,
+}
+impl EmptySettingsItem {
+    fn new(key: String, kind: String, desc: String) -> Self {
+        EmptySettingsItem {
+            info: SettingsItemInfo::new(key, kind, desc),
+        }
+    }
+}
+impl Widget<LapceTabData> for EmptySettingsItem {
+    fn event(
+        &mut self,
+        ctx: &mut EventCtx,
+        event: &Event,
+        _data: &mut LapceTabData,
+        _env: &Env,
+    ) {
+        match event {
+            Event::MouseMove(_) => ctx.set_handled(),
+            _ => {}
+        }
+    }
+
+    fn lifecycle(
+        &mut self,
+        ctx: &mut LifeCycleCtx,
+        event: &LifeCycle,
+        _data: &LapceTabData,
+        _env: &Env,
+    ) {
+        if let LifeCycle::HotChanged(_) = event {
+            ctx.request_paint();
+        }
+    }
+
+    fn update(
+        &mut self,
+        ctx: &mut UpdateCtx,
+        old_data: &LapceTabData,
+        data: &LapceTabData,
+        env: &Env,
+    ) {
+        self.info.update(ctx, old_data, data, env);
+    }
+
+    fn layout(
+        &mut self,
+        ctx: &mut LayoutCtx,
+        bc: &BoxConstraints,
+        data: &LapceTabData,
+        env: &Env,
+    ) -> Size {
+        self.info.layout(ctx, bc, data, env, 0.0)
+    }
+
+    fn paint(&mut self, ctx: &mut PaintCtx, data: &LapceTabData, env: &Env) {
+        self.info.paint(ctx, data, env, 0.0);
     }
 }
 
@@ -1265,10 +1331,10 @@ impl ThemeSettings {
             );
             doc.reload(
                 Rope::from(match self.kind {
-                    ThemeKind::Base => data.config.theme.base.get(color).unwrap(),
-                    ThemeKind::UI => data.config.theme.ui.get(color).unwrap(),
+                    ThemeKind::Base => data.config.color_theme.base.get(color).unwrap(),
+                    ThemeKind::UI => data.config.color_theme.ui.get(color).unwrap(),
                     ThemeKind::Syntax => {
-                        data.config.theme.syntax.get(color).unwrap()
+                        data.config.color_theme.syntax.get(color).unwrap()
                     }
                 }),
                 true,
@@ -1453,22 +1519,22 @@ impl Widget<LapceTabData> for ThemeSettings {
                 ThemeKind::Base => {
                     let default = data
                         .config
-                        .default_theme
+                        .default_color_theme
                         .base
                         .get(&self.keys[i])
                         .unwrap()
                         .to_string();
                     (
-                        data.config.theme.base.get(&self.keys[i]) != Some(&default),
+                        data.config.color_theme.base.get(&self.keys[i]) != Some(&default),
                         default,
                     )
                 }
                 ThemeKind::UI => {
                     if let Some(default) =
-                        data.config.default_theme.ui.get(&self.keys[i])
+                        data.config.default_color_theme.ui.get(&self.keys[i])
                     {
                         (
-                            data.config.theme.ui.get(&self.keys[i]) != Some(default),
+                            data.config.color_theme.ui.get(&self.keys[i]) != Some(default),
                             default.to_string(),
                         )
                     } else {
@@ -1478,13 +1544,13 @@ impl Widget<LapceTabData> for ThemeSettings {
                 ThemeKind::Syntax => {
                     let default = data
                         .config
-                        .default_theme
+                        .default_color_theme
                         .syntax
                         .get(&self.keys[i])
                         .cloned()
                         .unwrap_or_else(|| "".to_string());
                     (
-                        data.config.theme.syntax.get(&self.keys[i])
+                        data.config.color_theme.syntax.get(&self.keys[i])
                             != Some(&default),
                         default,
                     )

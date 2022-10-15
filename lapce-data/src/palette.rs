@@ -626,12 +626,12 @@ impl PaletteViewData {
             PaletteType::ColorTheme => {
                 let config = self.config.clone();
                 self.get_color_themes(ctx, &config);
-                self.preselect_matching(ctx, &config.theme.name);
+                self.preselect_matching(ctx, &config.color_theme.name);
             }
             PaletteType::FileIconTheme => {
                 let config = self.config.clone();
                 self.get_file_icon_themes(ctx, &config);
-                self.preselect_matching(ctx, &config.theme.name);
+                self.preselect_matching(ctx, &config.file_icon_theme.name);
             }
             PaletteType::Language => {
                 self.get_languages(ctx);
@@ -919,7 +919,7 @@ impl PaletteViewData {
             .values()
             .sorted_by_key(|(n, _)| n)
             .map(|(n, _)| PaletteItem {
-                content: PaletteItemContent::ColorTheme(n.to_string()),
+                content: PaletteItemContent::FileIconTheme(n.to_string()),
                 filter_text: n.to_string(),
                 score: 0,
                 indices: vec![],

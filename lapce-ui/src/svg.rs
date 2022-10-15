@@ -1,4 +1,4 @@
-use std::{collections::HashMap, ffi::OsStr, fs, path::Path, str::FromStr};
+use std::{collections::HashMap, ffi::OsStr, fs, path::PathBuf, str::FromStr};
 
 use druid::{piet::Svg, Color};
 use include_dir::{include_dir, Dir};
@@ -53,11 +53,12 @@ pub fn get_svg(name: &'static str) -> Option<Svg> {
     SVG_STORE.get_svg(name)
 }
 
-pub fn file_svg(file: String) -> (Svg, Option<&'static Color>) {
-    let file_path = Path::new(&file);
-    if let Ok(content) = fs::read_to_string(file_path) {
-        if let Ok(svg) = Svg::from_str(&content) {
-            return (svg, None);
+pub fn file_svg(file: Option<PathBuf>) -> (Svg, Option<&'static Color>) {
+    if let Some(file) = file {
+        if let Ok(content) = fs::read_to_string(file) {
+            if let Ok(svg) = Svg::from_str(&content) {
+                return (svg, None);
+            }
         }
     }
 
