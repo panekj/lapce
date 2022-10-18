@@ -868,7 +868,7 @@ impl notify::EventHandler for ConfigWatcher {
 
 impl LapceConfig {
     pub fn load(workspace: &LapceWorkspace, disabled_volts: &[String]) -> Self {
-        let config = Self::merge_config(workspace, None);
+        let config = Self::merge_config(workspace, None, None);
         let mut lapce_config: LapceConfig = config
             .try_deserialize()
             .unwrap_or_else(|_| DEFAULT_LAPCE_CONFIG.clone());
@@ -882,22 +882,38 @@ impl LapceConfig {
 
     fn resolve_theme(&mut self, workspace: &LapceWorkspace) {
         let mut default_lapce_config = DEFAULT_LAPCE_CONFIG.clone();
-        if let Some((_, theme_config)) = self
+        if let Some((_, color_theme_config)) = self
             .available_color_themes
             .get(&self.core.color_theme.to_lowercase())
         {
             if let Ok(mut theme_lapce_config) = config::Config::builder()
                 .add_source(DEFAULT_CONFIG.clone())
-                .add_source(theme_config.clone())
+                .add_source(color_theme_config.clone())
                 .build()
                 .and_then(|theme| theme.try_deserialize::<LapceConfig>())
             {
                 theme_lapce_config.resolve_colors(Some(&default_lapce_config));
                 default_lapce_config = theme_lapce_config;
             }
-            if let Ok(new) =
-                Self::merge_config(workspace, Some(theme_config.clone()))
-                    .try_deserialize::<LapceConfig>()
+        }
+
+        let color_them_config = self
+            .available_color_themes
+            .get(&self.core.color_theme.to_lowercase())
+            .map(|(_, config)| config);
+
+        let icon_them_config = self
+            .available_icon_themes
+            .get(&self.core.icon_theme.to_lowercase())
+            .map(|(_, config)| config);
+
+        if color_them_config.is_some() || icon_them_config.is_some() {
+            if let Ok(new) = Self::merge_config(
+                workspace,
+                color_them_config.cloned(),
+                icon_them_config.cloned(),
+            )
+            .try_deserialize::<LapceConfig>()
             {
                 self.core = new.core;
                 self.ui = new.ui;
@@ -917,10 +933,19 @@ impl LapceConfig {
 
     fn merge_config(
         workspace: &LapceWorkspace,
-        theme_config: Option<config::Config>,
+        color_theme_config: Option<config::Config>,
+        icon_theme_config: Option<config::Config>,
     ) -> config::Config {
         let mut config = DEFAULT_CONFIG.clone();
-        if let Some(theme) = theme_config {
+        if let Some(theme) = color_theme_config {
+            config = config::Config::builder()
+                .add_source(config.clone())
+                .add_source(theme)
+                .build()
+                .unwrap_or_else(|_| config.clone());
+        }
+
+        if let Some(theme) = icon_theme_config {
             config = config::Config::builder()
                 .add_source(config.clone())
                 .add_source(theme)
@@ -1019,7 +1044,9 @@ impl LapceConfig {
             std::fs::read_dir(themes_folder)
                 .ok()?
                 .filter_map(|entry| {
-                    entry.ok().and_then(|entry| Self::load_color_theme(&entry.path()))
+                    entry
+                        .ok()
+                        .and_then(|entry| Self::load_color_theme(&entry.path()))
                 })
                 .collect();
         Some(themes)
