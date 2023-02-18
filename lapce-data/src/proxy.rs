@@ -32,7 +32,7 @@ use thiserror::Error;
 
 use crate::{
     command::{LapceUICommand, LAPCE_UI_COMMAND},
-    data::{LapceWorkspace, LapceWorkspaceType, SshHost},
+    data::{CustomHost, LapceWorkspace, LapceWorkspaceType, SshHost},
     terminal::RawTerminal,
 };
 
@@ -378,6 +378,9 @@ impl LapceProxy {
             }
             LapceWorkspaceType::RemoteSSH(ssh) => {
                 self.start_remote(SshRemote { ssh })?;
+            }
+            LapceWorkspaceType::RemoteCustom(custom) => {
+                self.start_remote(CustomRemote { custom })?;
             }
             #[cfg(windows)]
             LapceWorkspaceType::RemoteWSL => {
@@ -934,6 +937,60 @@ impl Remote for WslRemote {
     fn command_builder(&self) -> Command {
         let mut cmd = new_command("wsl");
         cmd.arg("-d").arg(&self.distro).arg("--");
+        cmd
+    }
+}
+
+struct CustomRemote {
+    custom: CustomHost,
+}
+
+impl CustomRemote {
+    // #[cfg(windows)]
+    // const SSH_ARGS: &'static [&'static str] = &[];
+
+    // #[cfg(unix)]
+    // const SSH_ARGS: &'static [&'static str] = &[
+    //     "-o",
+    //     "ControlMaster=auto",
+    //     "-o",
+    //     "ControlPath=~/.ssh/cm_%C",
+    //     "-o",
+    //     "ControlPersist=30m",
+    //     "-o",
+    //     "ConnectTimeout=15",
+    // ];
+}
+
+impl Remote for CustomRemote {
+    fn upload_file(&self, local: impl AsRef<Path>, remote: &str) -> Result<()> {
+        let mut cmd = new_command(dbg!(&self.custom.program));
+
+        for arg in &self.custom.copy_args {
+            cmd.arg(dbg!(arg
+                .replace("{local}", &local.as_ref().display().to_string())
+                .replace("{remote}", remote)));
+        }
+
+        _ = dbg!(cmd.get_args());
+
+        let output = cmd.output()?;
+
+        log::debug!(target: "lapce_data::proxy::upload_file", "{}", String::from_utf8_lossy(&output.stderr));
+        log::debug!(target: "lapce_data::proxy::upload_file", "{}", String::from_utf8_lossy(&output.stdout));
+
+        Ok(())
+    }
+
+    fn command_builder(&self) -> Command {
+        let mut cmd = new_command(dbg!(&self.custom.program));
+
+        for arg in &self.custom.connect_args {
+            cmd.arg(dbg!(arg));
+        }
+
+        _ = dbg!(cmd.get_args());
+
         cmd
     }
 }

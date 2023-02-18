@@ -706,6 +706,26 @@ pub struct TerminalConfig {
     pub shell: String,
 }
 
+#[derive(FieldNames, Debug, Clone, Deserialize, Serialize, Default)]
+#[serde(rename_all = "kebab-case")]
+pub struct RemoteConfig {
+    #[field_names(desc = "List of custom remote options to connect to")]
+    pub entries: HashMap<String, RemoteEntryConfig>,
+}
+
+#[derive(FieldNames, Debug, Clone, Deserialize, Serialize, Default)]
+#[serde(rename_all = "kebab-case")]
+pub struct RemoteEntryConfig {
+    #[field_names(desc = "Base executable to use")]
+    pub program: String,
+
+    #[field_names(desc = "Copy file command")]
+    pub copy_args: Vec<String>,
+
+    #[field_names(desc = "Connect command")]
+    pub connect_args: Vec<String>,
+}
+
 #[derive(Debug, Clone, Deserialize, Serialize, Default)]
 #[serde(rename_all = "kebab-case")]
 pub struct ColorThemeConfig {
@@ -940,6 +960,7 @@ pub struct LapceConfig {
     pub ui: UIConfig,
     pub editor: EditorConfig,
     pub terminal: TerminalConfig,
+    pub remote: RemoteConfig,
     pub color_theme: ColorThemeConfig,
     pub icon_theme: IconThemeConfig,
     #[serde(flatten)]
@@ -1176,6 +1197,7 @@ impl LapceConfig {
                 }
             }
             LapceWorkspaceType::RemoteSSH(_) => {}
+            LapceWorkspaceType::RemoteCustom(_) => {}
             #[cfg(windows)]
             LapceWorkspaceType::RemoteWSL => {}
         }
