@@ -102,7 +102,7 @@ ifneq ($(OS),Windows_NT)
 	endif
 
 	GZ_NAME = $(TARGET)-$(PLATFORM)-$(TARGET_ARCH).gz
-	GZ_DIR  = $(RELEASE_DIR)/$(PLATFORM)
+	GZ_DIR  = $(RELEASE_DIR)/$(PLATFORM)-$(ARCH)
 endif
 
 all: help
@@ -121,12 +121,12 @@ windows-dependencies:
 fedora-dependencies:
 	@echo "Installing Fedora dependencies"
 	@dnf install \
-		gcc-c++ perl-FindBin perl-File-Compare gtk3-devel
+		clang libxkbcommon-x11-devel libxcb-devel vulkan-loader-devel
 ubuntu-dependencies:
 	@echo "Installing Ubuntu dependencies"
 	@apt-get -y update
 	@apt-get -y install \
-		cmake pkg-config libfontconfig-dev libgtk-3-dev g++
+		clang libxkbcommon-x11-dev pkg-config libvulkan-dev libgtk-3-dev
 
 rustup: ## Update/install rustup
 	@rustup update || $(MAKE) rustup-install
