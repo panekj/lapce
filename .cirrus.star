@@ -7,6 +7,7 @@ load(
     "script",
     "always",
     "artifacts",
+    "cache",
 )
 
 def main(ctx):
