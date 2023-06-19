@@ -2,6 +2,7 @@ load(
     "github.com/cirrus-modules/helpers",
     "task",
     "container",
+    "arm_container",
     "windows_container",
     "macos_instance",
     "script",
