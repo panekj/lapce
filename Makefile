@@ -102,7 +102,7 @@ ifneq ($(OS),Windows_NT)
 	endif
 
 	GZ_NAME = $(TARGET)-$(PLATFORM)-$(TARGET_ARCH).gz
-	GZ_DIR  = $(RELEASE_DIR)/$(PLATFORM)-$(ARCH)
+	GZ_DIR  = $(RELEASE_DIR)/$(PLATFORM)
 endif
 
 all: help
@@ -172,7 +172,8 @@ $(TARGET)-tarball: release-dir $(TARGET)-build
 
 gz: $(TARGET)-gz ## Create gzipped binary
 $(TARGET)-gz: release-dir $(TARGET)-build
-	@echo "Creating gzipped binary"
+	@echo "Creating gzipped binary '$(GZ_NAME)' in '$(GZ_DIR)'"
+	@mkdir -p $(GZ_DIR)
 	@gzip -c $(BUILD_DIR)/$(TARGET) > $(GZ_DIR)/$(GZ_NAME)
 	@echo "Created '$(GZ_NAME)' in '$(GZ_DIR)'"
 
