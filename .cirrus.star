@@ -127,25 +127,25 @@ def main(ctx):
                 always(artifacts("Upload executable tarball", "./${RELEASE_DIR}/linux/lapce-proxy-linux-aarch64.tar.gz")),
             ]
         ),
-        task(
-            name="Windows",
-            instance=windows_container(image="cirrusci/windowsservercore:2019"),
-            env={
-                "CIRRUS_SHELL": "powershell"
-            },
-            instructions=[
-                cache("cargo-git", "${env:USERPROFILE}/.cargo/git"),
-                cache("cargo-registry", "${env:USERPROFILE}/.cargo/registry"),
-                script("Install make", "choco install make"),
-                script("Set release directory", "echo RELEASE_DIR=$(make release-dir) >> $CIRRUS_ENV"),
-                script("Install Windows dependencies", "make windows-dependencies"),
-                script("Install rustup", "make rustup"),
-                script("Add rustup to PATH", "echo PATH=\"${env:USERPROFILE}/.cargo/bin:${env:PATH}\" >> $env:CIRRUS_ENV"),
-                script("Build", "make binary"),
-                always(artifacts("Upload lapce-proxy", "./${RELEASE_DIR}/windows/lapce-proxy-*.gz")),
-                always(artifacts("Upload executables", "./${RELEASE_DIR}/windows/Lapce-windows-*")),
-            ]
-        ),
+        # task(
+        #     name="Windows",
+        #     instance=windows_container(image="cirrusci/windowsservercore:2019"),
+        #     env={
+        #         "CIRRUS_SHELL": "powershell"
+        #     },
+        #     instructions=[
+        #         cache("cargo-git", "${env:USERPROFILE}/.cargo/git"),
+        #         cache("cargo-registry", "${env:USERPROFILE}/.cargo/registry"),
+        #         script("Install make", "choco install make"),
+        #         script("Set release directory", "echo RELEASE_DIR=$(make release-dir) >> $CIRRUS_ENV"),
+        #         script("Install Windows dependencies", "make windows-dependencies"),
+        #         script("Install rustup", "make rustup"),
+        #         script("Add rustup to PATH", "echo PATH=\"${env:USERPROFILE}/.cargo/bin:${env:PATH}\" >> $env:CIRRUS_ENV"),
+        #         script("Build", "make binary"),
+        #         always(artifacts("Upload lapce-proxy", "./${RELEASE_DIR}/windows/lapce-proxy-*.gz")),
+        #         always(artifacts("Upload executables", "./${RELEASE_DIR}/windows/Lapce-windows-*")),
+        #     ]
+        # ),
         # task(
         #     name="macOS Ventura",
         #     instance=macos_instance(image="ghcr.io/cirruslabs/macos-ventura-base:latest"),
