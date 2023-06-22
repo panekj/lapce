@@ -52,7 +52,7 @@ def main(ctx):
     return [
         task(
             name="Ubuntu 22.04",
-            instance=container(image="ubuntu:22.04", cpu=8.0, memory=16384),
+            instance=container(image="ubuntu:22.04", cpu=4.0, memory=8192),
             env={},
             instructions=[
                 cache("cargo-git", "${HOME}/.cargo/git"),
@@ -72,7 +72,7 @@ def main(ctx):
         ),
         task(
             name="Ubuntu 22.04",
-            instance=arm_container(image="ubuntu:22.04", cpu=8.0, memory=16384),
+            instance=arm_container(image="ubuntu:22.04", cpu=4.0, memory=8192),
             env={},
             instructions=[
                 cache("cargo-git", "${HOME}/.cargo/git"),
@@ -91,7 +91,7 @@ def main(ctx):
         ),
         task(
             name="lapce-proxy-x86_64",
-            instance=container(image="alpine:3.18", cpu=8.0, memory=16384),
+            instance=container(image="alpine:3.18", cpu=4.0, memory=8192),
             env={},
             instructions=[
                 cache("cargo-git", "${HOME}/.cargo/git"),
@@ -110,7 +110,7 @@ def main(ctx):
         ),
         task(
             name="lapce-proxy-aarch64",
-            instance=arm_container(image="alpine:3.18", cpu=8.0, memory=16384),
+            instance=arm_container(image="alpine:3.18", cpu=4.0, memory=8192),
             env={},
             instructions=[
                 cache("cargo-git", "${HOME}/.cargo/git"),
