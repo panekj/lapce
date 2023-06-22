@@ -96,7 +96,7 @@ def main(ctx):
             instructions=[
                 cache("cargo-git", "${HOME}/.cargo/git"),
                 cache("cargo-registry", "${HOME}/.cargo/registry"),
-                script("Upgrade system", "apk upgrade --Ua"),
+                script("Upgrade system", "apk upgrade -Ua"),
                 script("Install tools", "apk add --no-cache zlib-static freetype-static fontconfig-static libgit2-static libssh2-static openssl-libs-static libssl3 gtk+3.0-dev http-parser-dev cargo build-base openssl-dev git lld clang make"),
                 script("Set release directory", "echo RELEASE_DIR=$(make release-dir) >> $CIRRUS_ENV"),
                 # script("Install Ubuntu dependencies", "make ubuntu-dependencies"),
