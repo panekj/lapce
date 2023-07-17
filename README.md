@@ -14,6 +14,7 @@
   <a href="https://discord.gg/n8tGJ6Rn6D" target="_blank">
     <img src="https://img.shields.io/discord/946858761413328946?logo=discord" />
   </a>
+<a href="https://app.fossa.com/projects/git%2Bgithub.com%2Fpanekj%2Flapce?ref=badge_shield" alt="FOSSA Status"><img src="https://app.fossa.com/api/projects/git%2Bgithub.com%2Fpanekj%2Flapce.svg?type=shield"/></a>
   <a href="https://matrix.to/#/#lapce-editor:matrix.org" target="_blank">
     <img src="https://img.shields.io/matrix/lapce-editor:matrix.org?color=turquoise&logo=Matrix" />
   </a>
@@ -56,3 +57,6 @@ There is also a [Matrix Space](https://matrix.to/#/#lapce-editor:matrix.org), wh
 ## License
 
 Lapce is released under the Apache License Version 2, which is an open source license. You may contribute to this project, or use the code as you please as long as you adhere to its conditions. You can find a copy of the license text here: [`LICENSE`](LICENSE).
+
+
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fpanekj%2Flapce.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fpanekj%2Flapce?ref=badge_large)
